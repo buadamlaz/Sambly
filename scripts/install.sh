@@ -195,6 +195,8 @@ else
 fi
 
 usermod -aG sambashare "${SERVICE_USER}" 2>/dev/null || true
+# Allow sambly to read systemd journal (for Samba log tab)
+usermod -aG systemd-journal "${SERVICE_USER}" 2>/dev/null || true
 
 # ── Build Sambly ──────────────────────────────────────────────────────────────
 step "Building Sambly..."
@@ -321,13 +323,11 @@ RestartSec=5s
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=sambly
-NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ReadWritePaths=${DATA_DIR} /etc/samba ${LOG_DIR}
 ReadOnlyPaths=/var/log/samba
 ProtectHome=yes
-CapabilityBoundingSet=
 
 [Install]
 WantedBy=multi-user.target
