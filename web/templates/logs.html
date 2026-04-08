@@ -12,55 +12,134 @@
   {{template "nav" .}}
   <main class="main">
     <div class="topbar">
-      <h1 class="page-title">Audit Log</h1>
+      <h1 class="page-title">Logs</h1>
     </div>
     {{template "flash" .}}
 
-    <div class="card">
-      <div class="card-body">
-        {{with .Data}}
-        {{if .}}
-        <table class="table table-sm">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Time</th>
-              <th>User</th>
-              <th>Action</th>
-              <th>Details</th>
-              <th>IP</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{range .}}
-            <tr>
-              <td class="text-muted">{{.ID}}</td>
-              <td class="text-mono text-sm">{{.CreatedAt}}</td>
-              <td><strong>{{.Username}}</strong></td>
-              <td>
-                <span class="action-badge
-                  {{if contains .Action "FAIL"}}action-fail
-                  {{else if contains .Action "DELETE"}}action-delete
-                  {{else if contains .Action "LOGIN"}}action-login
-                  {{else}}action-default{{end}}">
-                  {{.Action}}
-                </span>
-              </td>
-              <td class="text-muted text-sm">{{if .Details}}{{.Details}}{{else}}—{{end}}</td>
-              <td class="text-mono text-sm text-muted">{{if .IPAddress}}{{.IPAddress}}{{else}}—{{end}}</td>
-            </tr>
-            {{end}}
-          </tbody>
-        </table>
+    {{with .Data}}
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <a href="/logs?tab=audit"
+         class="tab-item {{if eq .ActiveTab "audit"}}active{{end}}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Sambly Audit Log
+        {{if .Audit}}<span class="tab-count">{{len .Audit}}</span>{{end}}
+      </a>
+      <a href="/logs?tab=samba"
+         class="tab-item {{if eq .ActiveTab "samba"}}active{{end}}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Samba Server Log
+        {{if .SambaLog}}<span class="tab-count">{{len .SambaLog}}</span>{{end}}
+      </a>
+    </div>
+
+    <!-- ── Tab: Sambly Audit ── -->
+    {{if eq .ActiveTab "audit"}}
+    <div class="card tab-content">
+      <div class="card-header">
+        <span class="card-title">Sambly Audit Log</span>
+        <span class="text-muted text-sm">Last 300 entries · login, logout, user/share/group changes</span>
+      </div>
+      <div class="card-body p-0">
+        {{if .Audit}}
+        <div class="log-table-wrap">
+          <table class="table table-sm log-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Time</th>
+                <th>Admin</th>
+                <th>Action</th>
+                <th>Details</th>
+                <th>IP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .Audit}}
+              <tr>
+                <td class="text-muted text-sm">{{.ID}}</td>
+                <td class="text-mono text-sm">{{.CreatedAt}}</td>
+                <td><strong>{{.Username}}</strong></td>
+                <td>
+                  <span class="action-badge
+                    {{if contains .Action "FAIL"}}action-fail
+                    {{else if contains .Action "DELETE"}}action-delete
+                    {{else if contains .Action "LOGIN"}}action-login
+                    {{else if contains .Action "ADD"}}action-add
+                    {{else}}action-default{{end}}">
+                    {{.Action}}
+                  </span>
+                </td>
+                <td class="text-muted text-sm">{{if .Details}}{{.Details}}{{else}}—{{end}}</td>
+                <td class="text-mono text-sm text-muted">{{if .IPAddress}}{{.IPAddress}}{{else}}—{{end}}</td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
         {{else}}
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           <p>No audit log entries yet.</p>
         </div>
         {{end}}
+      </div>
+    </div>
+    {{end}}
+
+    <!-- ── Tab: Samba Server Log ── -->
+    {{if eq .ActiveTab "samba"}}
+    <div class="card tab-content">
+      <div class="card-header">
+        <span class="card-title">Samba Server Log</span>
+        <span class="text-muted text-sm">
+          {{if .SambaLogPath}}{{.SambaLogPath}} · last 300 entries{{else}}No log file found{{end}}
+        </span>
+      </div>
+      <div class="card-body p-0">
+        {{if .SambaLogErr}}
+        <div class="log-error-notice">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {{.SambaLogErr}}
+        </div>
+        {{else if .SambaLog}}
+        <div class="log-table-wrap">
+          <table class="table table-sm log-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Level</th>
+                <th>Source</th>
+                <th>Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .SambaLog}}
+              <tr class="{{levelClass .Level}}-row">
+                <td class="text-mono text-sm">{{.Time}}</td>
+                <td>
+                  <span class="log-level-badge {{levelClass .Level}}">
+                    {{levelLabel .Level}}
+                  </span>
+                </td>
+                <td class="text-mono text-sm text-muted">{{.Source}}</td>
+                <td class="text-sm">{{if .Message}}{{.Message}}{{else}}<span class="text-muted">—</span>{{end}}</td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
+        {{else}}
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <p>Samba log file is empty.</p>
+        </div>
         {{end}}
       </div>
     </div>
+    {{end}}
+
+    {{end}}
   </main>
 </div>
 <script src="/static/app.js"></script>

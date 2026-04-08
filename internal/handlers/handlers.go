@@ -10,6 +10,7 @@ import (
 	"github.com/buadamlaz/Sambly/internal/auth"
 	"github.com/buadamlaz/Sambly/internal/db"
 	"github.com/buadamlaz/Sambly/internal/security"
+	"github.com/buadamlaz/Sambly/internal/system"
 )
 
 // Handler is the root handler that holds all dependencies.
@@ -69,6 +70,8 @@ func templateFuncs() template.FuncMap {
 		"contains": func(s, substr string) bool {
 			return strings.Contains(s, substr)
 		},
+		"levelClass": system.LevelClass,
+		"levelLabel": system.LevelLabel,
 	}
 }
 
