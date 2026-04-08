@@ -7,6 +7,10 @@
 
 set -euo pipefail
 
+# ── Source directory (resolved BEFORE any cd commands) ───────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SRC_DIR="$(dirname "${SCRIPT_DIR}")"
+
 # ── Colors ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -119,10 +123,6 @@ usermod -aG sambashare "${SERVICE_USER}" 2>/dev/null || true
 
 # ── Build Sambly ──────────────────────────────────────────────────────────────
 step "Building Sambly..."
-
-# Determine source directory (script location)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC_DIR="$(dirname "${SCRIPT_DIR}")"
 
 if [[ ! -f "${SRC_DIR}/go.mod" ]]; then
   die "go.mod not found in ${SRC_DIR}. Run this script from the Sambly source directory."
