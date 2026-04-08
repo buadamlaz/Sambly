@@ -14,8 +14,8 @@
     <div class="topbar">
       <h1 class="page-title">Groups</h1>
       <div class="topbar-actions">
-        <button class="btn btn-primary" onclick="openModal('addGroupModal')">+ Add Group</button>
-        <button class="btn btn-secondary" onclick="openModal('assignModal')">Assign User</button>
+        <button class="btn btn-primary" data-open-modal="addGroupModal">+ Add Group</button>
+        <button class="btn btn-secondary" data-open-modal="assignModal">Assign User</button>
       </div>
     </div>
     {{template "flash" .}}
@@ -60,12 +60,11 @@
                 {{end}}
               </td>
               <td>
-                <form method="post" action="/groups/delete" style="display:inline"
-                      onsubmit="return confirm('Delete group {{$group.Name}}?')">
-                  {{template "csrf" $}}
-                  <input type="hidden" name="name" value="{{$group.Name}}">
-                  <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                </form>
+                <button class="btn btn-sm btn-danger"
+                        data-confirm-delete="Delete group &quot;{{$group.Name}}&quot;? This cannot be undone."
+                        data-form="deleteGroupForm"
+                        data-field="name"
+                        data-value="{{$group.Name}}">Delete</button>
               </td>
             </tr>
             {{end}}
@@ -75,7 +74,7 @@
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M1 20c0-3 3-5 8-5s8 2 8 5"/></svg>
           <p>No groups found.</p>
-          <button class="btn btn-primary" onclick="openModal('addGroupModal')">Create your first group</button>
+          <button class="btn btn-primary" data-open-modal="addGroupModal">Create your first group</button>
         </div>
         {{end}}
         {{end}}
@@ -89,7 +88,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Create Group</h3>
-      <button class="modal-close" onclick="closeModal('addGroupModal')">✕</button>
+      <button class="modal-close" data-close-modal="addGroupModal">✕</button>
     </div>
     <form method="post" action="/groups/add">
       {{template "csrf" .}}
@@ -102,7 +101,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeModal('addGroupModal')">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-close-modal="addGroupModal">Cancel</button>
         <button type="submit" class="btn btn-primary">Create Group</button>
       </div>
     </form>
@@ -114,7 +113,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Assign User to Group</h3>
-      <button class="modal-close" onclick="closeModal('assignModal')">✕</button>
+      <button class="modal-close" data-close-modal="assignModal">✕</button>
     </div>
     <form method="post" action="/groups/assign">
       {{template "csrf" .}}
@@ -131,12 +130,18 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeModal('assignModal')">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-close-modal="assignModal">Cancel</button>
         <button type="submit" class="btn btn-primary">Assign</button>
       </div>
     </form>
   </div>
 </div>
+
+<!-- Delete hidden form -->
+<form id="deleteGroupForm" method="post" action="/groups/delete" style="display:none">
+  {{template "csrf" .}}
+  <input type="hidden" name="name" value="">
+</form>
 
 <script src="/static/app.js"></script>
 </body>

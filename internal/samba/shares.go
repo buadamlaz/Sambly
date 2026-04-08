@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -14,17 +15,17 @@ const SmbConf = "/etc/samba/smb.conf"
 
 // Share represents a section from smb.conf.
 type Share struct {
-	Name        string
-	Path        string
-	Comment     string
-	ValidUsers  string
-	WriteList   string
-	ReadOnly    string
-	Browseable  string
-	GuestOK     string
-	CreateMask  string
+	Name          string
+	Path          string
+	Comment       string
+	ValidUsers    string
+	WriteList     string
+	ReadOnly      string
+	Browseable    string
+	GuestOK       string
+	CreateMask    string
 	DirectoryMask string
-	Raw         map[string]string // all other keys
+	Raw           map[string]string // all other keys
 }
 
 // ListShares parses smb.conf and returns configured shares (excluding [global] etc.).
@@ -132,24 +133,23 @@ func GetShare(name string) (*Share, error) {
 	return nil, fmt.Errorf("share not found: %s", name)
 }
 
-// AddShare appends a new share section to smb.conf.
+// AddShare appends a new share section to smb.conf via sudo tee -a.
 func AddShare(s Share) error {
 	if err := backupConf(); err != nil {
 		return err
 	}
 
-	f, err := os.OpenFile(SmbConf, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("open smb.conf for writing: %w", err)
-	}
-	defer f.Close()
-
 	block := buildShareBlock(s)
-	_, err = fmt.Fprint(f, block)
-	return err
+	cmd := exec.Command("sudo", "tee", "-a", SmbConf)
+	cmd.Stdin = strings.NewReader(block)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("append smb.conf: %s", strings.TrimSpace(string(out)))
+	}
+	return nil
 }
 
-// DeleteShare removes a share section from smb.conf.
+// DeleteShare removes a share section from smb.conf via sudo tee.
 func DeleteShare(name string) error {
 	if err := backupConf(); err != nil {
 		return err
@@ -175,10 +175,10 @@ func DeleteShare(name string) error {
 		}
 	}
 
-	return os.WriteFile(SmbConf, []byte(strings.Join(out, "\n")), 0644)
+	return writeConf(strings.Join(out, "\n"))
 }
 
-// EditShare replaces an existing share section.
+// EditShare replaces an existing share section via sudo tee.
 func EditShare(originalName string, s Share) error {
 	if err := backupConf(); err != nil {
 		return err
@@ -216,7 +216,18 @@ func EditShare(originalName string, s Share) error {
 		return fmt.Errorf("share '%s' not found in smb.conf", originalName)
 	}
 
-	return os.WriteFile(SmbConf, []byte(strings.Join(out, "\n")), 0644)
+	return writeConf(strings.Join(out, "\n"))
+}
+
+// writeConf writes content to smb.conf via sudo tee (overwrites).
+func writeConf(content string) error {
+	cmd := exec.Command("sudo", "tee", SmbConf)
+	cmd.Stdin = strings.NewReader(content)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("write smb.conf: %s", strings.TrimSpace(string(out)))
+	}
+	return nil
 }
 
 func buildShareBlock(s Share) string {

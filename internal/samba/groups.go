@@ -55,7 +55,7 @@ func ListGroups() ([]Group, error) {
 
 // CreateGroup creates a new Unix group.
 func CreateGroup(name string) error {
-	out, err := exec.Command("groupadd", name).CombinedOutput()
+	out, err := exec.Command("sudo", "groupadd", name).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("groupadd: %s", strings.TrimSpace(string(out)))
 	}
@@ -64,7 +64,7 @@ func CreateGroup(name string) error {
 
 // DeleteGroup removes a Unix group.
 func DeleteGroup(name string) error {
-	out, err := exec.Command("groupdel", name).CombinedOutput()
+	out, err := exec.Command("sudo", "groupdel", name).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("groupdel: %s", strings.TrimSpace(string(out)))
 	}
@@ -73,7 +73,7 @@ func DeleteGroup(name string) error {
 
 // AddUserToGroup adds a user to a Unix group.
 func AddUserToGroup(username, group string) error {
-	out, err := exec.Command("usermod", "-aG", group, username).CombinedOutput()
+	out, err := exec.Command("sudo", "usermod", "-aG", group, username).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("usermod: %s", strings.TrimSpace(string(out)))
 	}
@@ -82,7 +82,7 @@ func AddUserToGroup(username, group string) error {
 
 // RemoveUserFromGroup removes a user from a group using gpasswd.
 func RemoveUserFromGroup(username, group string) error {
-	out, err := exec.Command("gpasswd", "-d", username, group).CombinedOutput()
+	out, err := exec.Command("sudo", "gpasswd", "-d", username, group).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("gpasswd: %s", strings.TrimSpace(string(out)))
 	}

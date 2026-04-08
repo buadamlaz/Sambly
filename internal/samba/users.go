@@ -17,7 +17,7 @@ type SambaUser struct {
 
 // ListUsers returns all Samba users via pdbedit.
 func ListUsers() ([]SambaUser, error) {
-	out, err := runCommand("pdbedit", "-L", "-v")
+	out, err := runCommand("sudo", "pdbedit", "-L", "-v")
 	if err != nil {
 		// pdbedit may fail if no users exist yet — return empty list
 		return []SambaUser{}, nil
@@ -66,12 +66,7 @@ func parsePdbedit(output string) []SambaUser {
 // AddUser creates a Linux system user and adds them to Samba.
 // password is set via stdin to smbpasswd — never passed as a shell argument.
 func AddUser(username, password string) error {
-	// Create system user (no login shell, no home dir)
-	if _, err := exec.LookPath("useradd"); err != nil {
-		return fmt.Errorf("useradd not found")
-	}
-
-	out, err := exec.Command("useradd",
+	out, err := exec.Command("sudo", "useradd",
 		"--no-create-home",
 		"--shell", "/usr/sbin/nologin",
 		username,
@@ -90,11 +85,11 @@ func AddUser(username, password string) error {
 // DeleteUser removes a user from Samba (and optionally the system).
 func DeleteUser(username string) error {
 	// Remove from Samba database
-	if _, err := runCommand("smbpasswd", "-x", username); err != nil {
+	if _, err := runCommand("sudo", "smbpasswd", "-x", username); err != nil {
 		return fmt.Errorf("remove from samba: %w", err)
 	}
 	// Remove from system (best-effort)
-	exec.Command("userdel", username).Run()
+	exec.Command("sudo", "userdel", username).Run()
 	return nil
 }
 
@@ -105,20 +100,20 @@ func SetPassword(username, password string) error {
 
 // EnableUser re-enables a disabled Samba account.
 func EnableUser(username string) error {
-	_, err := runCommand("smbpasswd", "-e", username)
+	_, err := runCommand("sudo", "smbpasswd", "-e", username)
 	return err
 }
 
 // DisableUser disables a Samba account.
 func DisableUser(username string) error {
-	_, err := runCommand("smbpasswd", "-d", username)
+	_, err := runCommand("sudo", "smbpasswd", "-d", username)
 	return err
 }
 
 // setSambaPassword uses smbpasswd to set/change a password via stdin.
 // This avoids passing the password as a command-line argument.
 func setSambaPassword(username, password string) error {
-	cmd := exec.Command("smbpasswd", "-a", "-s", username)
+	cmd := exec.Command("sudo", "smbpasswd", "-a", "-s", username)
 	// smbpasswd -s reads password from stdin, expecting it twice
 	passInput := password + "\n" + password + "\n"
 	cmd.Stdin = bytes.NewBufferString(passInput)

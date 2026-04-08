@@ -14,7 +14,7 @@
     <div class="topbar">
       <h1 class="page-title">Samba Users</h1>
       <div class="topbar-actions">
-        <button class="btn btn-primary" onclick="openModal('addUserModal')">+ Add User</button>
+        <button class="btn btn-primary" data-open-modal="addUserModal">+ Add User</button>
       </div>
     </div>
     {{template "flash" .}}
@@ -49,17 +49,18 @@
               <td>
                 <div class="action-group">
                   <button class="btn btn-sm btn-secondary"
-                          onclick="openPassModal('{{.Username}}')">Password</button>
+                          data-open-modal="passModal"
+                          data-username="{{.Username}}">Password</button>
 
                   {{if .Disabled}}
-                  <form method="post" action="/users/toggle" style="display:inline">
+                  <form method="post" action="/users/toggle">
                     {{template "csrf" $}}
                     <input type="hidden" name="username" value="{{.Username}}">
                     <input type="hidden" name="action" value="enable">
                     <button type="submit" class="btn btn-sm btn-success">Enable</button>
                   </form>
                   {{else}}
-                  <form method="post" action="/users/toggle" style="display:inline">
+                  <form method="post" action="/users/toggle">
                     {{template "csrf" $}}
                     <input type="hidden" name="username" value="{{.Username}}">
                     <input type="hidden" name="action" value="disable">
@@ -68,7 +69,10 @@
                   {{end}}
 
                   <button class="btn btn-sm btn-danger"
-                          onclick="confirmDelete('{{.Username}}', 'deleteUserForm')">Delete</button>
+                          data-confirm-delete="Delete user &quot;{{.Username}}&quot;? This cannot be undone."
+                          data-form="deleteUserForm"
+                          data-field="username"
+                          data-value="{{.Username}}">Delete</button>
                 </div>
               </td>
             </tr>
@@ -79,7 +83,7 @@
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
           <p>No Samba users found.</p>
-          <button class="btn btn-primary" onclick="openModal('addUserModal')">Add your first user</button>
+          <button class="btn btn-primary" data-open-modal="addUserModal">Add your first user</button>
         </div>
         {{end}}
         {{end}}
@@ -93,7 +97,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Add Samba User</h3>
-      <button class="modal-close" onclick="closeModal('addUserModal')">✕</button>
+      <button class="modal-close" data-close-modal="addUserModal">✕</button>
     </div>
     <form method="post" action="/users/add">
       {{template "csrf" .}}
@@ -111,7 +115,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeModal('addUserModal')">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-close-modal="addUserModal">Cancel</button>
         <button type="submit" class="btn btn-primary">Add User</button>
       </div>
     </form>
@@ -123,7 +127,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3>Change Password</h3>
-      <button class="modal-close" onclick="closeModal('passModal')">✕</button>
+      <button class="modal-close" data-close-modal="passModal">✕</button>
     </div>
     <form method="post" action="/users/password">
       {{template "csrf" .}}
@@ -136,33 +140,20 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeModal('passModal')">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-close-modal="passModal">Cancel</button>
         <button type="submit" class="btn btn-primary">Set Password</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Delete confirmation -->
+<!-- Delete hidden form -->
 <form id="deleteUserForm" method="post" action="/users/delete" style="display:none">
   {{template "csrf" .}}
-  <input type="hidden" id="delete-username" name="username" value="">
+  <input type="hidden" name="username" value="">
 </form>
 
 <script src="/static/app.js"></script>
-<script>
-function openPassModal(username) {
-  document.getElementById('pass-username').value = username;
-  document.getElementById('pass-label').textContent = username;
-  openModal('passModal');
-}
-function confirmDelete(username, formId) {
-  if (confirm('Delete user "' + username + '"? This cannot be undone.')) {
-    document.getElementById('delete-username').value = username;
-    document.getElementById(formId).submit();
-  }
-}
-</script>
 </body>
 </html>
 {{end}}

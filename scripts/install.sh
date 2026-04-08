@@ -306,6 +306,7 @@ sambly ALL=(ALL) NOPASSWD: /usr/bin/smbpasswd
 sambly ALL=(ALL) NOPASSWD: /usr/bin/pdbedit
 sambly ALL=(ALL) NOPASSWD: /usr/bin/net
 sambly ALL=(ALL) NOPASSWD: /usr/bin/gpasswd
+sambly ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/samba/smb.conf
 SUDOERS
 chmod 0440 /etc/sudoers.d/sambly
 

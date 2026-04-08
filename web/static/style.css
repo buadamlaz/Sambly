@@ -62,11 +62,6 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-.brand-icon {
-  font-size: 22px;
-  color: var(--accent);
-}
-
 .brand-name {
   font-size: 18px;
   font-weight: 700;
