@@ -10,7 +10,7 @@ User=sambly
 Group=sambly
 WorkingDirectory=/opt/sambly
 ExecStart=/opt/sambly/sambly \
-  -addr 127.0.0.1:8090 \
+  -addr 0.0.0.0:8090 \
   -data /var/lib/sambly \
   -web /opt/sambly/web
 Restart=on-failure

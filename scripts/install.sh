@@ -244,7 +244,7 @@ User=${SERVICE_USER}
 Group=${SERVICE_USER}
 WorkingDirectory=${INSTALL_DIR}
 ExecStart=${INSTALL_DIR}/${BINARY_NAME} \\
-  -addr 127.0.0.1:8090 \\
+  -addr 0.0.0.0:8090 \\
   -data ${DATA_DIR} \\
   -web ${INSTALL_DIR}/web
 Restart=on-failure
@@ -297,7 +297,7 @@ echo ""
 echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════╗${RESET}"
 echo -e "${GREEN}${BOLD}║         Sambly Installation Complete!                ║${RESET}"
 echo -e "${GREEN}${BOLD}╠══════════════════════════════════════════════════════╣${RESET}"
-echo -e "${GREEN}${BOLD}║${RESET}  URL:      ${BOLD}http://127.0.0.1:8090${RESET}                    ${GREEN}${BOLD}║${RESET}"
+echo -e "${GREEN}${BOLD}║${RESET}  URL:      ${BOLD}http://0.0.0.0:8090${RESET}                    ${GREEN}${BOLD}║${RESET}"
 echo -e "${GREEN}${BOLD}║${RESET}  Service:  sambly.service (systemd)              ${GREEN}${BOLD}║${RESET}"
 echo -e "${GREEN}${BOLD}║${RESET}  Data:     ${DATA_DIR}                    ${GREEN}${BOLD}║${RESET}"
 echo -e "${GREEN}${BOLD}║${RESET}  Logs:     journalctl -u sambly -f               ${GREEN}${BOLD}║${RESET}"

@@ -9,13 +9,6 @@
 
 </div>
 
-> **⚠ IMPORTANT SECURITY WARNING**
->
-> **THIS PROJECT IS NOT DESIGNED TO BE EXPOSED TO THE INTERNET.**
-> Sambly is intended exclusively for **local network** or **private server** use.
-> Running Sambly on a public-facing interface is a serious security risk.
-> It binds to `127.0.0.1:8090` by default for this reason.
-
 ---
 
 Sambly is an open-source, production-grade web GUI for managing a Samba server on Linux.
@@ -31,6 +24,14 @@ Clean, minimal, dark-mode, and secure by default.
 - **Security-first** — Rate limiting, IP bans, CSRF protection, bcrypt passwords, secure session cookies.
 - **Restart Warnings** — Prompts to restart Samba when configuration changes.
 - **Auto-setup** — Generates secure admin credentials on first run.
+
+> **⚠ IMPORTANT SECURITY WARNING**
+>
+> **THIS PROJECT IS NOT DESIGNED TO BE EXPOSED TO THE INTERNET.**
+> Sambly is intended exclusively for **local network** or **private server** use.
+> Running Sambly on a public-facing interface is a serious security risk.
+
+---
 
 ## Screenshots
 
@@ -76,7 +77,7 @@ journalctl -u sambly --no-pager | grep -A6 "CREDENTIALS"
 Then open your browser:
 
 ```
-http://127.0.0.1:8090
+http://<server-ip>:8090
 ```
 
 > Change the default password immediately after first login in **Settings → Change Password**.
@@ -98,7 +99,7 @@ go mod download
 go build -o sambly ./cmd/server
 
 # Run
-./sambly -addr 127.0.0.1:8090 -data ./data -web ./web
+./sambly -addr 0.0.0.0:8090 -data ./data -web ./web
 ```
 
 ## Security
@@ -115,14 +116,14 @@ Sambly is built with security as the top priority:
 | Input Validation | Usernames, paths, share names, group names all validated with allowlists |
 | Config Backups | smb.conf is backed up to `/var/lib/sambly/backups/` before every modification |
 | Security Headers | X-Frame-Options, X-Content-Type-Options, CSP, Referrer-Policy |
-| Bind Address | Default: `127.0.0.1:8090` (localhost only) |
+| Bind Address | Default: `0.0.0.0:8090` (all interfaces) |
 
 ### ⚠ Security Warnings
 
-- **Do not change the bind address to `0.0.0.0`** unless you have a reverse proxy with TLS and proper authentication in front of it.
-- **Do not expose port 8090** to the public internet.
+- **Do not expose port 8090** to the public internet without a firewall rule.
 - This tool manages Samba server configuration — treat access to it as equivalent to root access to Samba.
 - Always use a strong, unique password for the admin account.
+- Consider restricting access via firewall: `ufw allow from 192.168.1.0/24 to any port 8090`
 
 ## Usage Guide
 
@@ -181,6 +182,7 @@ sambly/
 ├── web/
 │   ├── templates/              # HTML templates (Go html/template)
 │   └── static/                 # CSS, JS (no frameworks)
+├── assets/                     # Logo and images
 ├── scripts/install.sh          # Installation script
 ├── sambly.service              # systemd service unit
 ├── go.mod
@@ -215,8 +217,8 @@ cd Sambly
 go mod download
 go build ./...
 
-# Run in development (requires Samba on Linux, or mock the samba package)
-./sambly -addr 127.0.0.1:8090 -data ./data -web ./web
+# Run
+./sambly -addr 0.0.0.0:8090 -data ./data -web ./web
 ```
 
 ### Reporting Issues
@@ -228,8 +230,3 @@ For bugs and feature requests, open a GitHub issue.
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-> **⚠ REMINDER: DO NOT EXPOSE SAMBLY TO THE PUBLIC INTERNET.**
-> It is designed for local/private network administration only.

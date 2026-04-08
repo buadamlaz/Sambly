@@ -29,7 +29,7 @@ const banner = `
 `
 
 func main() {
-	addr := flag.String("addr", "127.0.0.1:8090", "HTTP listen address")
+	addr := flag.String("addr", "0.0.0.0:8090", "HTTP listen address")
 	dataDir := flag.String("data", "/var/lib/sambly", "Data directory for SQLite DB")
 	webDir := flag.String("web", "web", "Web assets directory")
 	flag.Parse()
@@ -130,7 +130,7 @@ func firstRunSetup(database *db.DB) error {
 	fmt.Println("╔══════════════════════════════════════════════════╗")
 	fmt.Println("║           SAMBLY — INITIAL CREDENTIALS           ║")
 	fmt.Println("╠══════════════════════════════════════════════════╣")
-	fmt.Printf( "║  URL:      http://127.0.0.1:8090                 ║\n")
+	fmt.Printf( "║  URL:      http://<server-ip>:8090                 ║\n")
 	fmt.Printf( "║  Username: admin                                  ║\n")
 	fmt.Printf( "║  Password: %-38s║\n", password)
 	fmt.Println("╠══════════════════════════════════════════════════╣")
