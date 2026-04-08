@@ -90,6 +90,13 @@ if [[ "${1:-}" == "--uninstall" || "${1:-}" == "remove" || "${1:-}" == "uninstal
   ok "Sambly files removed."
 
   step "Removing service user '${SERVICE_USER}'..."
+  # Remove from supplementary groups first (gpasswd removes membership cleanly)
+  for grp in sambashare systemd-journal; do
+    if getent group "${grp}" | grep -qw "${SERVICE_USER}"; then
+      gpasswd -d "${SERVICE_USER}" "${grp}" 2>/dev/null && info "Removed from group: ${grp}" || true
+    fi
+  done
+  # Delete the user (also removes it from all remaining group memberships)
   userdel "${SERVICE_USER}" 2>/dev/null && ok "User '${SERVICE_USER}' removed." || warn "User '${SERVICE_USER}' not found."
 
   if [[ "${rm_samba^^}" != "N" ]]; then
