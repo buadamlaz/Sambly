@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -28,10 +29,12 @@ const banner = `
   ⚠  FOR LOCAL/PRIVATE NETWORK USE ONLY
 `
 
+const credentialsFile = "initial-credentials.txt"
+
 func main() {
-	addr := flag.String("addr", "0.0.0.0:8090", "HTTP listen address")
+	addr    := flag.String("addr", "0.0.0.0:8090", "HTTP listen address")
 	dataDir := flag.String("data", "/var/lib/sambly", "Data directory for SQLite DB")
-	webDir := flag.String("web", "web", "Web assets directory")
+	webDir  := flag.String("web", "web", "Web assets directory")
 	flag.Parse()
 
 	fmt.Print(banner)
@@ -43,13 +46,13 @@ func main() {
 	}
 
 	// --- First-run setup: create admin user if none exists ---
-	if err := firstRunSetup(database); err != nil {
+	if err := firstRunSetup(database, *dataDir, *addr); err != nil {
 		log.Fatalf("[ERROR] First-run setup: %v", err)
 	}
 
 	// --- Managers ---
 	authMgr := auth.NewManager(database)
-	secMgr := security.NewManager(database)
+	secMgr  := security.NewManager(database)
 
 	// --- Handlers ---
 	templateDir := *webDir + "/templates"
@@ -83,13 +86,11 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	go func() {
 		log.Printf("[INFO] Sambly listening on http://%s", *addr)
-		log.Printf("[INFO] ⚠  DO NOT expose this panel to the public internet!")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("[ERROR] HTTP server: %v", err)
 		}
@@ -103,7 +104,7 @@ func main() {
 	log.Println("[INFO] Goodbye.")
 }
 
-func firstRunSetup(database *db.DB) error {
+func firstRunSetup(database *db.DB, dataDir, addr string) error {
 	exists, err := database.AdminUserExists()
 	if err != nil {
 		return err
@@ -126,15 +127,20 @@ func firstRunSetup(database *db.DB) error {
 		return err
 	}
 
+	// Write credentials to file so install.sh can display them
+	credPath := filepath.Join(dataDir, credentialsFile)
+	credContent := fmt.Sprintf("USERNAME=admin\nPASSWORD=%s\nADDR=%s\n", password, addr)
+	_ = os.WriteFile(credPath, []byte(credContent), 0600)
+
+	// Also print to stdout (goes to systemd journal)
 	fmt.Println()
 	fmt.Println("╔══════════════════════════════════════════════════╗")
-	fmt.Println("║           SAMBLY — INITIAL CREDENTIALS           ║")
+	fmt.Println("║         SAMBLY — INITIAL CREDENTIALS            ║")
 	fmt.Println("╠══════════════════════════════════════════════════╣")
-	fmt.Printf( "║  URL:      http://<server-ip>:8090                 ║\n")
-	fmt.Printf( "║  Username: admin                                  ║\n")
+	fmt.Printf( "║  Username: admin                                 ║\n")
 	fmt.Printf( "║  Password: %-38s║\n", password)
 	fmt.Println("╠══════════════════════════════════════════════════╣")
-	fmt.Println("║  ⚠  Change this password after first login!      ║")
+	fmt.Println("║  ⚠  Change this password after first login!     ║")
 	fmt.Println("╚══════════════════════════════════════════════════╝")
 	fmt.Println()
 
