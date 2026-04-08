@@ -1,7 +1,13 @@
+<div align="center">
+
+<img src="assets/logo.png" alt="Sambly Logo" width="180" />
+
 # Sambly — Samba Management, Simplified
 
 [![GitHub](https://img.shields.io/github/license/buadamlaz/Sambly)](LICENSE)
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev)
+
+</div>
 
 > **⚠ IMPORTANT SECURITY WARNING**
 >
