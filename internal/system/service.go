@@ -9,7 +9,7 @@ import (
 // ServiceStatus represents the state of the Samba service.
 type ServiceStatus struct {
 	Active  bool
-	Status  string // "active (running)", "inactive", etc.
+	Status  string
 	Enabled bool
 }
 
@@ -31,40 +31,24 @@ func GetSambaStatus() ServiceStatus {
 	}
 }
 
-// StartSamba starts the smbd service.
+// StartSamba starts the smbd service via sudo.
 func StartSamba() error {
-	out, err := exec.Command("systemctl", "start", "smbd").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("start smbd: %s", strings.TrimSpace(string(out)))
-	}
-	return nil
+	return sudoSystemctl("start", "smbd")
 }
 
-// StopSamba stops the smbd service.
+// StopSamba stops the smbd service via sudo.
 func StopSamba() error {
-	out, err := exec.Command("systemctl", "stop", "smbd").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("stop smbd: %s", strings.TrimSpace(string(out)))
-	}
-	return nil
+	return sudoSystemctl("stop", "smbd")
 }
 
-// RestartSamba restarts the smbd service.
+// RestartSamba restarts the smbd service via sudo.
 func RestartSamba() error {
-	out, err := exec.Command("systemctl", "restart", "smbd").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("restart smbd: %s", strings.TrimSpace(string(out)))
-	}
-	return nil
+	return sudoSystemctl("restart", "smbd")
 }
 
-// ReloadSamba reloads smbd config without a full restart.
+// ReloadSamba reloads smbd config via sudo.
 func ReloadSamba() error {
-	out, err := exec.Command("systemctl", "reload", "smbd").CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("reload smbd: %s", strings.TrimSpace(string(out)))
-	}
-	return nil
+	return sudoSystemctl("reload", "smbd")
 }
 
 // IsSambaInstalled checks if samba binaries are available.
@@ -77,6 +61,15 @@ func IsSambaInstalled() bool {
 func ValidateConf() (string, error) {
 	out, err := exec.Command("testparm", "-s", "--suppress-prompt").CombinedOutput()
 	return string(out), err
+}
+
+// sudoSystemctl runs: sudo systemctl <action> <unit>
+func sudoSystemctl(action, unit string) error {
+	out, err := exec.Command("sudo", "systemctl", action, unit).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%s %s: %s", action, unit, strings.TrimSpace(string(out)))
+	}
+	return nil
 }
 
 func extractActiveLine(statusOutput string) string {

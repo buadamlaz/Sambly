@@ -428,16 +428,31 @@ label {
 
 /* ── Card in main content (not via .content) ── */
 main > .card,
-main > .stats-grid + .card,
+main > .stats-grid,
 main > .warning-banner,
-main > .tab-bar,
-main > .tab-content {
+main > .tab-bar {
   margin-left: 28px;
   margin-right: 28px;
 }
 
-main > .card + .card,
-main > .card + .warning-banner {
+main > .card {
+  margin-top: 20px;
+}
+
+main > .tab-bar {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+main > .tab-content {
+  margin: 16px 28px 0;
+}
+
+main > .warning-banner {
+  margin-top: 16px;
+}
+
+main > .stats-grid + .card {
   margin-top: 20px;
 }
 
