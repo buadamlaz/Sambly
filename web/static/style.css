@@ -429,8 +429,16 @@ label {
 /* ── Card in main content (not via .content) ── */
 main > .card,
 main > .stats-grid + .card,
-main > .warning-banner {
-  margin: 0 28px;
+main > .warning-banner,
+main > .tab-bar,
+main > .tab-content {
+  margin-left: 28px;
+  margin-right: 28px;
+}
+
+main > .card + .card,
+main > .card + .warning-banner {
+  margin-top: 20px;
 }
 
 /* ── Service ── */

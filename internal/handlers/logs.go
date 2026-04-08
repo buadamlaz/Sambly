@@ -8,11 +8,11 @@ import (
 )
 
 type logsData struct {
-	Audit       []db.AuditEntry
-	SambaLog    []system.SambaLogEntry
+	Audit        []db.AuditEntry
+	SambaLog     []system.SambaLogEntry
 	SambaLogPath string
 	SambaLogErr  string
-	ActiveTab   string // "audit" | "samba"
+	ActiveTab    string
 }
 
 func (h *Handler) handleLogs(w http.ResponseWriter, r *http.Request) {
@@ -27,25 +27,23 @@ func (h *Handler) handleLogs(w http.ResponseWriter, r *http.Request) {
 		tab = "audit"
 	}
 
-	// --- Sambly audit log ---
+	// Sambly audit log
 	audit, err := h.db.GetAuditLog(300)
 	flashErr := ""
 	if err != nil {
 		flashErr = "Failed to load audit log: " + err.Error()
 	}
 
-	// --- Samba server log ---
+	// Samba server log (file → journalctl fallback)
 	logPath := system.FindSambaLog()
-	var sambaEntries []system.SambaLogEntry
-	sambaLogErr := ""
+	sambaEntries, source, sambaErr := system.ReadSambaLog(logPath, 300)
 
-	if logPath == "" {
-		sambaLogErr = "Samba log file not found. Samba may not be installed or has not written any logs yet."
-	} else {
-		sambaEntries, err = system.ReadSambaLog(logPath, 300)
-		if err != nil {
-			sambaLogErr = "Failed to read Samba log (" + logPath + "): " + err.Error()
-		}
+	sambaLogErr := ""
+	if sambaErr != nil {
+		sambaLogErr = sambaErr.Error()
+	}
+	if source != "" && sambaErr == nil {
+		logPath = source
 	}
 
 	h.render(w, "logs.html", PageData{

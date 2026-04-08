@@ -36,7 +36,7 @@ cat <<'EOF'
 \___ \ / _' | '_ ' _ \| '_ \| | | | |
  ___) | (_| | | | | | | |_) | | |_| |
 |____/ \__,_|_| |_| |_|_.__/|_|\__, |
-                                 |___/
+                                |___/
   Samba management, simplified.
 EOF
 echo -e "${RESET}"
@@ -321,6 +321,7 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ReadWritePaths=${DATA_DIR} /etc/samba ${LOG_DIR}
+ReadOnlyPaths=/var/log/samba
 ProtectHome=yes
 CapabilityBoundingSet=
 

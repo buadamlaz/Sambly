@@ -24,6 +24,7 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ReadWritePaths=/var/lib/sambly /etc/samba /var/log/sambly
+ReadOnlyPaths=/var/log/samba
 ProtectHome=yes
 CapabilityBoundingSet=
 
