@@ -1,0 +1,168 @@
+{{define "users.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="layout">
+  {{template "nav" .}}
+  <main class="main">
+    <div class="topbar">
+      <h1 class="page-title">Samba Users</h1>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openModal('addUserModal')">+ Add User</button>
+      </div>
+    </div>
+    {{template "flash" .}}
+
+    <div class="card">
+      <div class="card-body">
+        {{with .Data}}
+        {{if .}}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>UID</th>
+              <th>Full Name</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .}}
+            <tr>
+              <td><strong>{{.Username}}</strong></td>
+              <td class="text-muted">{{.UID}}</td>
+              <td>{{if .FullName}}{{.FullName}}{{else}}<span class="text-muted">—</span>{{end}}</td>
+              <td>
+                {{if .Disabled}}
+                  <span class="badge badge-warning">Disabled</span>
+                {{else}}
+                  <span class="badge badge-success">Active</span>
+                {{end}}
+              </td>
+              <td>
+                <div class="action-group">
+                  <button class="btn btn-sm btn-secondary"
+                          onclick="openPassModal('{{.Username}}')">Password</button>
+
+                  {{if .Disabled}}
+                  <form method="post" action="/users/toggle" style="display:inline">
+                    {{template "csrf" $}}
+                    <input type="hidden" name="username" value="{{.Username}}">
+                    <input type="hidden" name="action" value="enable">
+                    <button type="submit" class="btn btn-sm btn-success">Enable</button>
+                  </form>
+                  {{else}}
+                  <form method="post" action="/users/toggle" style="display:inline">
+                    {{template "csrf" $}}
+                    <input type="hidden" name="username" value="{{.Username}}">
+                    <input type="hidden" name="action" value="disable">
+                    <button type="submit" class="btn btn-sm btn-warning">Disable</button>
+                  </form>
+                  {{end}}
+
+                  <button class="btn btn-sm btn-danger"
+                          onclick="confirmDelete('{{.Username}}', 'deleteUserForm')">Delete</button>
+                </div>
+              </td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+        {{else}}
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          <p>No Samba users found.</p>
+          <button class="btn btn-primary" onclick="openModal('addUserModal')">Add your first user</button>
+        </div>
+        {{end}}
+        {{end}}
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Add User Modal -->
+<div id="addUserModal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Samba User</h3>
+      <button class="modal-close" onclick="closeModal('addUserModal')">✕</button>
+    </div>
+    <form method="post" action="/users/add">
+      {{template "csrf" .}}
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="add-username">Username</label>
+          <input type="text" id="add-username" name="username" class="form-control"
+                 placeholder="e.g. alice" required pattern="[a-zA-Z0-9_\-\.]{1,32}">
+          <span class="form-hint">Letters, numbers, underscore, hyphen, dot. Max 32 chars.</span>
+        </div>
+        <div class="form-group">
+          <label for="add-password">Password</label>
+          <input type="password" id="add-password" name="password" class="form-control"
+                 placeholder="Min 8 characters" required minlength="8">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addUserModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add User</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="passModal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Change Password</h3>
+      <button class="modal-close" onclick="closeModal('passModal')">✕</button>
+    </div>
+    <form method="post" action="/users/password">
+      {{template "csrf" .}}
+      <input type="hidden" id="pass-username" name="username" value="">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>New Password for <strong id="pass-label"></strong></label>
+          <input type="password" name="password" class="form-control"
+                 placeholder="Min 8 characters" required minlength="8">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('passModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Set Password</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete confirmation -->
+<form id="deleteUserForm" method="post" action="/users/delete" style="display:none">
+  {{template "csrf" .}}
+  <input type="hidden" id="delete-username" name="username" value="">
+</form>
+
+<script src="/static/app.js"></script>
+<script>
+function openPassModal(username) {
+  document.getElementById('pass-username').value = username;
+  document.getElementById('pass-label').textContent = username;
+  openModal('passModal');
+}
+function confirmDelete(username, formId) {
+  if (confirm('Delete user "' + username + '"? This cannot be undone.')) {
+    document.getElementById('delete-username').value = username;
+    document.getElementById(formId).submit();
+  }
+}
+</script>
+</body>
+</html>
+{{end}}

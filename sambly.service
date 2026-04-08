@@ -1,0 +1,31 @@
+[Unit]
+Description=Sambly — Samba Web Management GUI
+Documentation=https://github.com/buadamlaz/Sambly
+After=network.target samba.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=sambly
+Group=sambly
+WorkingDirectory=/opt/sambly
+ExecStart=/opt/sambly/sambly \
+  -addr 127.0.0.1:8090 \
+  -data /var/lib/sambly \
+  -web /opt/sambly/web
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sambly
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/sambly /etc/samba /var/log/sambly
+ProtectHome=yes
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

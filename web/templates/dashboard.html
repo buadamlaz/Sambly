@@ -1,0 +1,106 @@
+{{define "dashboard.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="layout">
+  {{template "nav" .}}
+  <main class="main">
+    <div class="topbar">
+      <h1 class="page-title">Dashboard</h1>
+    </div>
+    {{template "flash" .}}
+
+    {{with .Data}}
+    {{if not .SambaInstalled}}
+    <div class="alert alert-danger">
+      <strong>Samba is not installed.</strong> Run the install script to set up Samba.
+    </div>
+    {{end}}
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">{{.UserCount}}</div>
+          <div class="stat-label">Samba Users</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">{{.ShareCount}}</div>
+          <div class="stat-label">Shares</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-teal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="8" r="3"/><path d="M1 20c0-3 3-5 8-5s8 2 8 5"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">{{.GroupCount}}</div>
+          <div class="stat-label">Groups</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon {{if .ServiceStatus.Active}}stat-icon-green{{else}}stat-icon-red{{end}}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="stat-body">
+          <div class="stat-value">
+            {{if .ServiceStatus.Active}}
+            <span class="badge badge-success">Running</span>
+            {{else}}
+            <span class="badge badge-danger">Stopped</span>
+            {{end}}
+          </div>
+          <div class="stat-label">Samba Service</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">
+        <h2 class="card-title">Service Status</h2>
+      </div>
+      <div class="card-body">
+        <div class="service-status">
+          <div class="service-detail">
+            <span class="detail-label">Status</span>
+            <span class="detail-value">{{.ServiceStatus.Status}}</span>
+          </div>
+          <div class="service-detail">
+            <span class="detail-label">Auto-start</span>
+            <span class="detail-value">{{if .ServiceStatus.Enabled}}Enabled{{else}}Disabled{{end}}</span>
+          </div>
+        </div>
+        <div class="service-actions mt-3">
+          <a href="/settings" class="btn btn-primary">Manage Service</a>
+          <a href="/shares" class="btn btn-secondary">View Shares</a>
+        </div>
+      </div>
+    </div>
+    {{end}}
+
+    <div class="warning-banner mt-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>This panel is for <strong>local/private network use only</strong>. Never expose Sambly to the public internet.</span>
+    </div>
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
+{{end}}

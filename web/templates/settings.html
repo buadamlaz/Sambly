@@ -1,0 +1,107 @@
+{{define "settings.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="layout">
+  {{template "nav" .}}
+  <main class="main">
+    <div class="topbar">
+      <h1 class="page-title">Settings</h1>
+    </div>
+    {{template "flash" .}}
+
+    {{with .Data}}
+    <!-- Service Control -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Samba Service</h2>
+        <span class="badge {{if .ServiceStatus.Active}}badge-success{{else}}badge-danger{{end}}">
+          {{if .ServiceStatus.Active}}Running{{else}}Stopped{{end}}
+        </span>
+      </div>
+      <div class="card-body">
+        {{if not .SambaInstalled}}
+        <div class="alert alert-danger">
+          Samba is not installed on this system. Run the install script first.
+        </div>
+        {{else}}
+        <div class="service-detail-grid">
+          <div class="service-detail">
+            <span class="detail-label">Status</span>
+            <span class="detail-value text-mono">{{.ServiceStatus.Status}}</span>
+          </div>
+          <div class="service-detail">
+            <span class="detail-label">Auto-start on boot</span>
+            <span class="detail-value">{{if .ServiceStatus.Enabled}}Enabled{{else}}Disabled{{end}}</span>
+          </div>
+        </div>
+        <div class="service-actions mt-3">
+          <form method="post" action="/settings/service" style="display:inline">
+            {{template "csrf" $}}
+            <input type="hidden" name="action" value="start">
+            <button type="submit" class="btn btn-success" {{if .ServiceStatus.Active}}disabled{{end}}>Start</button>
+          </form>
+          <form method="post" action="/settings/service" style="display:inline">
+            {{template "csrf" $}}
+            <input type="hidden" name="action" value="stop">
+            <button type="submit" class="btn btn-danger" {{if not .ServiceStatus.Active}}disabled{{end}}>Stop</button>
+          </form>
+          <form method="post" action="/settings/service" style="display:inline">
+            {{template "csrf" $}}
+            <input type="hidden" name="action" value="restart">
+            <button type="submit" class="btn btn-warning">Restart</button>
+          </form>
+          <form method="post" action="/settings/service" style="display:inline">
+            {{template "csrf" $}}
+            <input type="hidden" name="action" value="reload">
+            <button type="submit" class="btn btn-secondary">Reload Config</button>
+          </form>
+        </div>
+        {{end}}
+      </div>
+    </div>
+    {{end}}
+
+    <!-- Change Admin Password -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h2 class="card-title">Change Admin Password</h2>
+      </div>
+      <div class="card-body">
+        <form method="post" action="/settings/password" style="max-width: 420px">
+          {{template "csrf" .}}
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" name="current_password" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" name="new_password" class="form-control"
+                   required minlength="12" placeholder="Min 12 characters">
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" name="confirm_password" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-primary">Update Password</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Security Notice -->
+    <div class="warning-banner mt-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>Sambly binds to <code>127.0.0.1:8090</code> by default. <strong>Never expose this panel to the public internet.</strong></span>
+    </div>
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
+{{end}}

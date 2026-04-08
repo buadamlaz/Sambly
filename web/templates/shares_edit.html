@@ -1,0 +1,105 @@
+{{define "shares_edit.html"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="layout">
+  {{template "nav" .}}
+  <main class="main">
+    <div class="topbar">
+      <h1 class="page-title">Edit Share</h1>
+      <div class="topbar-actions">
+        <a href="/shares" class="btn btn-secondary">← Back to Shares</a>
+      </div>
+    </div>
+    {{template "flash" .}}
+
+    {{with .Data}}
+    <div class="card">
+      <div class="card-body">
+        <form method="post" action="/shares/edit">
+          {{template "csrf" $}}
+          <input type="hidden" name="original_name" value="{{.Name}}">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Share Name</label>
+              <input type="text" name="name" class="form-control" value="{{.Name}}" required>
+            </div>
+            <div class="form-group">
+              <label>Path</label>
+              <input type="text" name="path" class="form-control" value="{{.Path}}" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Comment</label>
+            <input type="text" name="comment" class="form-control" value="{{.Comment}}">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Valid Users</label>
+              <input type="text" name="valid_users" class="form-control" value="{{.ValidUsers}}"
+                     placeholder="alice, bob, @finance">
+              <span class="form-hint">Comma-separated. Use @group for groups.</span>
+            </div>
+            <div class="form-group">
+              <label>Write List</label>
+              <input type="text" name="write_list" class="form-control" value="{{.WriteList}}"
+                     placeholder="alice, @admins">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Read Only</label>
+              <select name="read_only" class="form-control">
+                <option value="no" {{if eq .ReadOnly "no"}}selected{{end}}>No (writable)</option>
+                <option value="yes" {{if eq .ReadOnly "yes"}}selected{{end}}>Yes (read only)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Browseable</label>
+              <select name="browseable" class="form-control">
+                <option value="yes" {{if eq .Browseable "yes"}}selected{{end}}>Yes</option>
+                <option value="no" {{if eq .Browseable "no"}}selected{{end}}>No</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Guest OK</label>
+              <select name="guest_ok" class="form-control">
+                <option value="no" {{if eq .GuestOK "no"}}selected{{end}}>No</option>
+                <option value="yes" {{if eq .GuestOK "yes"}}selected{{end}}>Yes</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Create Mask</label>
+              <input type="text" name="create_mask" class="form-control"
+                     value="{{.CreateMask}}" placeholder="0644" pattern="[0-7]{3,4}">
+            </div>
+            <div class="form-group">
+              <label>Directory Mask</label>
+              <input type="text" name="directory_mask" class="form-control"
+                     value="{{.DirectoryMask}}" placeholder="0755" pattern="[0-7]{3,4}">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <a href="/shares" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {{end}}
+  </main>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
+{{end}}

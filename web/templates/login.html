@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-body">
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="brand-icon-lg">⬡</span>
+        <h1 class="brand-title">Sambly</h1>
+        <p class="brand-slogan">Samba management, simplified.</p>
+      </div>
+
+      {{if .FlashErr}}
+      <div class="alert alert-danger">
+        <span class="alert-icon">✕</span> {{.FlashErr}}
+      </div>
+      {{end}}
+
+      {{if .Flash}}
+      <div class="alert alert-success">
+        <span class="alert-icon">✓</span> {{.Flash}}
+      </div>
+      {{end}}
+
+      <form method="post" action="/login" autocomplete="off">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" class="form-control"
+                 placeholder="admin" required autofocus autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" class="form-control"
+                 placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+      </form>
+
+      <div class="login-warning">
+        <span class="warn-icon">⚠</span>
+        This panel is for <strong>local/private network use only</strong>.
+        Do not expose to the internet.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
