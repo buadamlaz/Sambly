@@ -284,6 +284,11 @@ fi
 cp /etc/samba/smb.conf "${DATA_DIR}/backups/smb.conf.install-$(date +%Y%m%d-%H%M%S)"
 ok "smb.conf backed up."
 
+# Allow sambly user to write smb.conf directly (group ownership, no sudo needed)
+chown root:"${SERVICE_USER}" /etc/samba/smb.conf
+chmod 664 /etc/samba/smb.conf
+ok "smb.conf ownership set to root:${SERVICE_USER} (664)"
+
 # ── Systemd service ────────────────────────────────────────────────────────────
 step "Installing systemd service..."
 
@@ -306,7 +311,6 @@ sambly ALL=(ALL) NOPASSWD: /usr/bin/smbpasswd
 sambly ALL=(ALL) NOPASSWD: /usr/bin/pdbedit
 sambly ALL=(ALL) NOPASSWD: /usr/bin/net
 sambly ALL=(ALL) NOPASSWD: /usr/bin/gpasswd
-sambly ALL=(ALL) NOPASSWD: /usr/bin/tee /etc/samba/smb.conf
 SUDOERS
 chmod 0440 /etc/sudoers.d/sambly
 

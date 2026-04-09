@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -133,23 +132,24 @@ func GetShare(name string) (*Share, error) {
 	return nil, fmt.Errorf("share not found: %s", name)
 }
 
-// AddShare appends a new share section to smb.conf via sudo tee -a.
+// AddShare appends a new share section to smb.conf.
+// smb.conf must be group-owned by sambly with 664 permissions (set by install.sh).
 func AddShare(s Share) error {
 	if err := backupConf(); err != nil {
 		return err
 	}
 
-	block := buildShareBlock(s)
-	cmd := exec.Command("sudo", "tee", "-a", SmbConf)
-	cmd.Stdin = strings.NewReader(block)
-	out, err := cmd.CombinedOutput()
+	f, err := os.OpenFile(SmbConf, os.O_APPEND|os.O_WRONLY, 0664)
 	if err != nil {
-		return fmt.Errorf("append smb.conf: %s", strings.TrimSpace(string(out)))
+		return fmt.Errorf("open smb.conf for writing: %w", err)
 	}
-	return nil
+	defer f.Close()
+
+	_, err = fmt.Fprint(f, buildShareBlock(s))
+	return err
 }
 
-// DeleteShare removes a share section from smb.conf via sudo tee.
+// DeleteShare removes a share section from smb.conf.
 func DeleteShare(name string) error {
 	if err := backupConf(); err != nil {
 		return err
@@ -175,10 +175,10 @@ func DeleteShare(name string) error {
 		}
 	}
 
-	return writeConf(strings.Join(out, "\n"))
+	return os.WriteFile(SmbConf, []byte(strings.Join(out, "\n")), 0664)
 }
 
-// EditShare replaces an existing share section via sudo tee.
+// EditShare replaces an existing share section.
 func EditShare(originalName string, s Share) error {
 	if err := backupConf(); err != nil {
 		return err
@@ -199,7 +199,6 @@ func EditShare(originalName string, s Share) error {
 		if strings.HasPrefix(trimmed, "[") && strings.HasSuffix(trimmed, "]") {
 			sectionName := trimmed[1 : len(trimmed)-1]
 			if strings.EqualFold(sectionName, originalName) {
-				// Inject the new block here
 				out = append(out, buildShareBlock(s))
 				replaced = true
 				skip = true
@@ -216,18 +215,7 @@ func EditShare(originalName string, s Share) error {
 		return fmt.Errorf("share '%s' not found in smb.conf", originalName)
 	}
 
-	return writeConf(strings.Join(out, "\n"))
-}
-
-// writeConf writes content to smb.conf via sudo tee (overwrites).
-func writeConf(content string) error {
-	cmd := exec.Command("sudo", "tee", SmbConf)
-	cmd.Stdin = strings.NewReader(content)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("write smb.conf: %s", strings.TrimSpace(string(out)))
-	}
-	return nil
+	return os.WriteFile(SmbConf, []byte(strings.Join(out, "\n")), 0664)
 }
 
 func buildShareBlock(s Share) string {
