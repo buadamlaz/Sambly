@@ -109,11 +109,20 @@ func AddUser(username, password string) error {
 }
 
 // DeleteUser removes a user from Samba and the system.
+// smbpasswd -x is best-effort: if the user isn't in the Samba DB
+// (e.g. was never fully added), we still remove the system account.
 func DeleteUser(username string) error {
-	if _, err := runCommand("sudo", "smbpasswd", "-x", username); err != nil {
-		return fmt.Errorf("remove from samba: %w", err)
+	out, err := runCommand("sudo", "smbpasswd", "-x", username)
+	if err != nil {
+		// Only fail if the user actually exists in the system but samba removal errored.
+		// If the error is "Failed to find entry..." the user was never in Samba DB — continue.
+		if !strings.Contains(out, "Failed to find entry") &&
+			!strings.Contains(out, "no such user") {
+			return fmt.Errorf("remove from samba: %s", strings.TrimSpace(out))
+		}
 	}
-	exec.Command("sudo", "userdel", username).Run()
+	// Remove system user (best-effort, ignore if already gone)
+	exec.Command("sudo", "userdel", "-r", username).Run()
 	return nil
 }
 
