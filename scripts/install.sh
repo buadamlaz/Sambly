@@ -332,9 +332,8 @@ StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=sambly
 PrivateTmp=yes
-ProtectSystem=strict
-ReadWritePaths=${DATA_DIR} /etc/samba ${LOG_DIR}
-ReadOnlyPaths=/var/log/samba
+ProtectSystem=full
+ReadWritePaths=${DATA_DIR} ${LOG_DIR}
 ProtectHome=yes
 
 [Install]

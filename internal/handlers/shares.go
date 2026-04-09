@@ -9,6 +9,21 @@ import (
 	"github.com/buadamlaz/Sambly/internal/security"
 )
 
+// SharesPageData bundles shares list and available users for autocomplete.
+type SharesPageData struct {
+	Shares []samba.Share
+	Users  []string
+}
+
+func sambaUsernames() []string {
+	users, _ := samba.ListUsers()
+	names := make([]string, 0, len(users))
+	for _, u := range users {
+		names = append(names, u.Username)
+	}
+	return names
+}
+
 func (h *Handler) handleShares(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.requireSession(r)
 	if !ok {
@@ -22,7 +37,7 @@ func (h *Handler) handleShares(w http.ResponseWriter, r *http.Request) {
 		Username:   sess.Username,
 		CSRF:       sess.CSRFToken,
 		ActivePage: "shares",
-		Data:       shares,
+		Data:       SharesPageData{Shares: shares, Users: sambaUsernames()},
 	}
 	if err != nil {
 		pd.FlashErr = "Failed to read smb.conf: " + err.Error()
@@ -78,7 +93,10 @@ func (h *Handler) handleSharesEdit(w http.ResponseWriter, r *http.Request) {
 			Title:    "Edit Share — Sambly",
 			Username: sess.Username,
 			CSRF:     sess.CSRFToken,
-			Data:     share,
+			Data:     struct {
+				Share *samba.Share
+				Users []string
+			}{Share: share, Users: sambaUsernames()},
 		})
 		return
 	}
@@ -211,6 +229,6 @@ func (h *Handler) sharesError(w http.ResponseWriter, sess *auth.Session, errMsg 
 		CSRF:       sess.CSRFToken,
 		ActivePage: "shares",
 		FlashErr:   errMsg,
-		Data:       shares,
+		Data:       SharesPageData{Shares: shares, Users: sambaUsernames()},
 	})
 }

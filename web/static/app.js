@@ -91,4 +91,64 @@ document.addEventListener('DOMContentLoaded', function() {
       setTimeout(() => alert.style.display = 'none', 400);
     }, 5000);
   });
+
+  // ── User picker autocomplete ──────────────────────────────────────────────
+  initUserPickers();
 });
+
+// Multi-value user picker: autocomplete on comma-separated inputs.
+// Reads options from <datalist id="samba-users-list">.
+// Attach to inputs with: data-user-picker attribute.
+// Wrapper div .user-picker-wrap must already be in HTML (next sibling is .user-picker-drop).
+function initUserPickers() {
+  const datalist = document.getElementById('samba-users-list');
+  if (!datalist) return;
+
+  const options = Array.from(datalist.options).map(o => o.value);
+
+  document.querySelectorAll('[data-user-picker]').forEach(function(input) {
+    // The .user-picker-drop div is already in the HTML as a sibling
+    const wrap = input.closest('.user-picker-wrap');
+    if (!wrap) return;
+    const drop = wrap.querySelector('.user-picker-drop');
+    if (!drop) return;
+
+    function getLastToken() {
+      const parts = input.value.split(',');
+      return parts[parts.length - 1].trim().toLowerCase();
+    }
+
+    function showDrop() {
+      const token = getLastToken();
+      if (!token) { drop.style.display = 'none'; return; }
+
+      const matches = options.filter(u => u.toLowerCase().startsWith(token));
+      if (!matches.length) { drop.style.display = 'none'; return; }
+
+      drop.innerHTML = '';
+      matches.forEach(function(u) {
+        const item = document.createElement('div');
+        item.className = 'user-picker-item';
+        item.textContent = u;
+        item.addEventListener('mousedown', function(e) {
+          e.preventDefault(); // don't blur input before we update value
+          const parts = input.value.split(',');
+          parts[parts.length - 1] = ' ' + u;
+          // Add trailing comma+space so user can immediately type next user
+          input.value = parts.join(',').replace(/^,\s*/, '') + ', ';
+          drop.style.display = 'none';
+          input.focus();
+        });
+        drop.appendChild(item);
+      });
+      drop.style.display = 'block';
+    }
+
+    input.addEventListener('input', showDrop);
+    input.addEventListener('focus', showDrop);
+    input.addEventListener('blur', function() {
+      // Delay hide so mousedown on item fires first
+      setTimeout(function() { drop.style.display = 'none'; }, 180);
+    });
+  });
+}

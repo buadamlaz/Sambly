@@ -36,7 +36,7 @@
     <div class="card">
       <div class="card-body">
         {{with .Data}}
-        {{if .}}
+        {{if .Shares}}
         <table class="table">
           <thead>
             <tr>
@@ -51,7 +51,7 @@
             </tr>
           </thead>
           <tbody>
-            {{range .}}
+            {{range .Shares}}
             <tr>
               <td><strong>{{.Name}}</strong></td>
               <td class="text-mono">{{.Path}}</td>
@@ -81,6 +81,11 @@
           <button class="btn btn-primary" data-open-modal="addShareModal">Add your first share</button>
         </div>
         {{end}}
+
+        <!-- Datalist for user autocomplete -->
+        <datalist id="samba-users-list">
+          {{range .Users}}<option value="{{.}}">{{end}}
+        </datalist>
         {{end}}
       </div>
     </div>
@@ -117,14 +122,20 @@
         <div class="form-row">
           <div class="form-group">
             <label>Valid Users</label>
-            <input type="text" name="valid_users" class="form-control"
-                   placeholder="alice, bob, @finance">
-            <span class="form-hint">Comma-separated. Use @group for groups.</span>
+            <div class="user-picker-wrap">
+              <input type="text" name="valid_users" class="form-control"
+                     placeholder="alice, bob, @finance" data-user-picker>
+              <div class="user-picker-drop" style="display:none"></div>
+            </div>
+            <span class="form-hint">Type to search users. Use @group for groups.</span>
           </div>
           <div class="form-group">
             <label>Write List</label>
-            <input type="text" name="write_list" class="form-control"
-                   placeholder="alice, @admins">
+            <div class="user-picker-wrap">
+              <input type="text" name="write_list" class="form-control"
+                     placeholder="alice, @admins" data-user-picker>
+              <div class="user-picker-drop" style="display:none"></div>
+            </div>
           </div>
         </div>
         <div class="form-row">
