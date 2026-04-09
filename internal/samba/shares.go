@@ -255,11 +255,21 @@ func buildShareBlock(s Share) string {
 
 // SetupShareDirectory creates the share path and sets ownership to the first
 // non-group user in validUsers (e.g. "alice" from "alice, @finance").
-// Uses sudo so the sambly service user can create directories anywhere.
+// Tries direct creation first; falls back to sudo mkdir if permission denied.
 func SetupShareDirectory(path, validUsers string) error {
-	if err := exec.Command("sudo", "mkdir", "-p", path).Run(); err != nil {
-		return fmt.Errorf("mkdir -p %s: %w", path, err)
+	// Try direct creation (works if sambly has write access to parent dir)
+	dirErr := os.MkdirAll(path, 0755)
+	if dirErr != nil {
+		// Need elevated privileges — try sudo mkdir
+		out, err := exec.Command("sudo", "mkdir", "-p", path).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf(
+				"cannot create directory %q — run manually:\n  sudo mkdir -p %s\n\nSystem error: %s",
+				path, path, strings.TrimSpace(string(out)),
+			)
+		}
 	}
+
 	// Extract first plain username (skip @group entries)
 	owner := ""
 	for _, part := range strings.Split(validUsers, ",") {
@@ -270,7 +280,10 @@ func SetupShareDirectory(path, validUsers string) error {
 		}
 	}
 	if owner != "" {
-		exec.Command("sudo", "chown", owner+":"+owner, path).Run()
+		if out, err := exec.Command("sudo", "chown", owner+":"+owner, path).CombinedOutput(); err != nil {
+			// Non-fatal: directory created, ownership just couldn't be set
+			_ = out
+		}
 	}
 	exec.Command("sudo", "chmod", "755", path).Run()
 	return nil

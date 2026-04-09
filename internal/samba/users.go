@@ -3,7 +3,9 @@ package samba
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -15,15 +17,43 @@ type SambaUser struct {
 	FullName string
 }
 
-// ListUsers returns all Samba users via pdbedit.
+// ListUsers returns Samba users.
+// Tries pdbedit first (most accurate); falls back to reading /etc/passwd
+// for regular accounts (UID 1000-65533) — no sudo required for fallback.
 func ListUsers() ([]SambaUser, error) {
 	out, err := runCommand("sudo", "pdbedit", "-L", "-v")
+	if err == nil {
+		users := parsePdbedit(out)
+		if len(users) > 0 {
+			return users, nil
+		}
+	}
+	return listUsersFromPasswd()
+}
+
+// listUsersFromPasswd reads /etc/passwd and returns accounts with UID >= 1000.
+// This is always readable without sudo and covers all Samba users we create.
+func listUsersFromPasswd() ([]SambaUser, error) {
+	data, err := os.ReadFile("/etc/passwd")
 	if err != nil {
-		// pdbedit may fail if no users exist yet — return empty list
 		return []SambaUser{}, nil
 	}
-
-	return parsePdbedit(out), nil
+	var users []SambaUser
+	for _, line := range strings.Split(string(data), "\n") {
+		parts := strings.Split(line, ":")
+		if len(parts) < 4 {
+			continue
+		}
+		uid, err := strconv.Atoi(parts[2])
+		if err != nil || uid < 1000 || uid >= 65534 {
+			continue // skip system users and nobody
+		}
+		users = append(users, SambaUser{
+			Username: parts[0],
+			UID:      parts[2],
+		})
+	}
+	return users, nil
 }
 
 func parsePdbedit(output string) []SambaUser {
@@ -50,7 +80,6 @@ func parsePdbedit(output string) []SambaUser {
 				current.FullName = strings.TrimSpace(strings.TrimPrefix(line, "Full Name:"))
 			} else if strings.HasPrefix(line, "Account Flags:") {
 				flags := strings.TrimSpace(strings.TrimPrefix(line, "Account Flags:"))
-				// Disabled accounts have 'D' flag: [D          ]
 				current.Disabled = strings.Contains(flags, "D")
 			}
 		}
@@ -63,8 +92,8 @@ func parsePdbedit(output string) []SambaUser {
 	return users
 }
 
-// AddUser creates a Linux system user and adds them to Samba.
-// password is set via stdin to smbpasswd — never passed as a shell argument.
+// AddUser creates a Linux system user (no shell, no home dir) and adds to Samba.
+// Password is passed via stdin — never as a command-line argument.
 func AddUser(username, password string) error {
 	out, err := exec.Command("sudo", "useradd",
 		"--no-create-home",
@@ -72,23 +101,18 @@ func AddUser(username, password string) error {
 		username,
 	).CombinedOutput()
 	if err != nil {
-		// User might already exist — check
 		if !strings.Contains(string(out), "already exists") {
 			return fmt.Errorf("useradd: %s", strings.TrimSpace(string(out)))
 		}
 	}
-
-	// Add to Samba and set password via stdin
 	return setSambaPassword(username, password)
 }
 
-// DeleteUser removes a user from Samba (and optionally the system).
+// DeleteUser removes a user from Samba and the system.
 func DeleteUser(username string) error {
-	// Remove from Samba database
 	if _, err := runCommand("sudo", "smbpasswd", "-x", username); err != nil {
 		return fmt.Errorf("remove from samba: %w", err)
 	}
-	// Remove from system (best-effort)
 	exec.Command("sudo", "userdel", username).Run()
 	return nil
 }
@@ -110,14 +134,10 @@ func DisableUser(username string) error {
 	return err
 }
 
-// setSambaPassword uses smbpasswd to set/change a password via stdin.
-// This avoids passing the password as a command-line argument.
 func setSambaPassword(username, password string) error {
 	cmd := exec.Command("sudo", "smbpasswd", "-a", "-s", username)
-	// smbpasswd -s reads password from stdin, expecting it twice
 	passInput := password + "\n" + password + "\n"
 	cmd.Stdin = bytes.NewBufferString(passInput)
-
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("smbpasswd: %s", strings.TrimSpace(string(out)))
@@ -125,7 +145,6 @@ func setSambaPassword(username, password string) error {
 	return nil
 }
 
-// runCommand executes a command and returns combined output.
 func runCommand(name string, args ...string) (string, error) {
 	out, err := exec.Command(name, args...).CombinedOutput()
 	return string(out), err
