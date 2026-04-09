@@ -332,8 +332,7 @@ StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=sambly
 PrivateTmp=yes
-ProtectSystem=full
-ReadWritePaths=${DATA_DIR} ${LOG_DIR}
+ProtectSystem=yes
 ProtectHome=yes
 
 [Install]

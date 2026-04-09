@@ -22,8 +22,7 @@ SyslogIdentifier=sambly
 # Security hardening
 # Note: NoNewPrivileges is intentionally omitted — sudo is required for smbd control
 PrivateTmp=yes
-ProtectSystem=full
-ReadWritePaths=/var/lib/sambly /var/log/sambly
+ProtectSystem=yes
 ProtectHome=yes
 
 [Install]
