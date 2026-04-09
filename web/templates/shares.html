@@ -36,7 +36,7 @@
     <div class="card">
       <div class="card-body">
         {{with .Data}}
-        {{if .Shares}}
+        {{if .}}
         <table class="table">
           <thead>
             <tr>
@@ -51,7 +51,7 @@
             </tr>
           </thead>
           <tbody>
-            {{range .Shares}}
+            {{range .}}
             <tr>
               <td><strong>{{.Name}}</strong></td>
               <td class="text-mono">{{.Path}}</td>
@@ -81,11 +81,6 @@
           <button class="btn btn-primary" data-open-modal="addShareModal">Add your first share</button>
         </div>
         {{end}}
-
-        <!-- Datalist for user autocomplete -->
-        <datalist id="samba-users-list">
-          {{range .Users}}<option value="{{.}}">{{end}}
-        </datalist>
         {{end}}
       </div>
     </div>
@@ -123,13 +118,15 @@
           <div class="form-group">
             <label>Valid Users</label>
             <input type="text" name="valid_users" class="form-control"
-                   placeholder="Kullanıcı ara…" data-user-picker autocomplete="off">
-            <span class="form-hint">Virgülle ayır. Grup için @grupadi kullan.</span>
+                   placeholder="e.g. alice, bob, @finance"
+                   data-user-picker autocomplete="off">
+            <span class="form-hint">Comma-separated. Use @group for groups.</span>
           </div>
           <div class="form-group">
             <label>Write List</label>
             <input type="text" name="write_list" class="form-control"
-                   placeholder="Kullanıcı ara…" data-user-picker autocomplete="off">
+                   placeholder="e.g. alice, @admins"
+                   data-user-picker autocomplete="off">
           </div>
         </div>
         <div class="form-row">
@@ -166,6 +163,12 @@
             <input type="text" name="directory_mask" class="form-control"
                    placeholder="0755" pattern="[0-7]{3,4}">
           </div>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" name="create_dir" value="1">
+            <span>Create directory if it doesn't exist (sets ownership to first valid user)</span>
+          </label>
         </div>
       </div>
       <div class="modal-footer">

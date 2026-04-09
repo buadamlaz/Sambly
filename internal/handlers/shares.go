@@ -9,21 +9,6 @@ import (
 	"github.com/buadamlaz/Sambly/internal/security"
 )
 
-// SharesPageData bundles shares list and available users for autocomplete.
-type SharesPageData struct {
-	Shares []samba.Share
-	Users  []string
-}
-
-func sambaUsernames() []string {
-	users, _ := samba.ListUsers()
-	names := make([]string, 0, len(users))
-	for _, u := range users {
-		names = append(names, u.Username)
-	}
-	return names
-}
-
 func (h *Handler) handleShares(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.requireSession(r)
 	if !ok {
@@ -37,7 +22,7 @@ func (h *Handler) handleShares(w http.ResponseWriter, r *http.Request) {
 		Username:   sess.Username,
 		CSRF:       sess.CSRFToken,
 		ActivePage: "shares",
-		Data:       SharesPageData{Shares: shares, Users: sambaUsernames()},
+		Data:       shares,
 	}
 	if err != nil {
 		pd.FlashErr = "Failed to read smb.conf: " + err.Error()
@@ -62,6 +47,17 @@ func (h *Handler) handleSharesAdd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ip := security.RealIP(r)
+
+	// Optionally create the directory and set ownership
+	if r.FormValue("create_dir") == "1" {
+		if err := samba.SetupShareDirectory(share.Path, share.ValidUsers); err != nil {
+			h.db.AddAuditLog(sess.Username, "SHARE_MKDIR_FAIL", share.Path+": "+err.Error(), ip)
+			h.sharesError(w, sess, "Failed to create directory: "+err.Error())
+			return
+		}
+		h.db.AddAuditLog(sess.Username, "SHARE_MKDIR", "Created directory: "+share.Path, ip)
+	}
+
 	if err := samba.AddShare(share); err != nil {
 		h.db.AddAuditLog(sess.Username, "SHARE_ADD_FAIL", share.Name+": "+err.Error(), ip)
 		h.sharesError(w, sess, "Failed to add share: "+err.Error())
@@ -93,10 +89,7 @@ func (h *Handler) handleSharesEdit(w http.ResponseWriter, r *http.Request) {
 			Title:    "Edit Share — Sambly",
 			Username: sess.Username,
 			CSRF:     sess.CSRFToken,
-			Data:     struct {
-				Share *samba.Share
-				Users []string
-			}{Share: share, Users: sambaUsernames()},
+			Data:     share,
 		})
 		return
 	}
@@ -229,6 +222,6 @@ func (h *Handler) sharesError(w http.ResponseWriter, sess *auth.Session, errMsg 
 		CSRF:       sess.CSRFToken,
 		ActivePage: "shares",
 		FlashErr:   errMsg,
-		Data:       SharesPageData{Shares: shares, Users: sambaUsernames()},
+		Data:       shares,
 	})
 }

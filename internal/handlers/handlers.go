@@ -157,6 +157,9 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/settings/password", h.handleChangePassword)
 
 	mux.HandleFunc("/logs", h.handleLogs)
+
+	// API
+	mux.HandleFunc("/api/users", h.handleAPIUsers)
 }
 
 func (h *Handler) handleRoot(w http.ResponseWriter, r *http.Request) {

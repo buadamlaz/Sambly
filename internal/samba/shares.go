@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -250,6 +251,29 @@ func buildShareBlock(s Share) string {
 		sb.WriteString("   directory mask = " + s.DirectoryMask + "\n")
 	}
 	return sb.String()
+}
+
+// SetupShareDirectory creates the share path and sets ownership to the first
+// non-group user in validUsers (e.g. "alice" from "alice, @finance").
+// Uses sudo so the sambly service user can create directories anywhere.
+func SetupShareDirectory(path, validUsers string) error {
+	if err := exec.Command("sudo", "mkdir", "-p", path).Run(); err != nil {
+		return fmt.Errorf("mkdir -p %s: %w", path, err)
+	}
+	// Extract first plain username (skip @group entries)
+	owner := ""
+	for _, part := range strings.Split(validUsers, ",") {
+		u := strings.TrimSpace(part)
+		if u != "" && !strings.HasPrefix(u, "@") {
+			owner = u
+			break
+		}
+	}
+	if owner != "" {
+		exec.Command("sudo", "chown", owner+":"+owner, path).Run()
+	}
+	exec.Command("sudo", "chmod", "755", path).Run()
+	return nil
 }
 
 // backupConf creates a timestamped backup of smb.conf.

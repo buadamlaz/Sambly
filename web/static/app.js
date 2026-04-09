@@ -97,15 +97,20 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ── User picker: portal dropdown, keyboard nav, comma-separated multi-value ───
-// Reads options from <datalist id="samba-users-list">.
+// Fetches users from /api/users (authenticated JSON endpoint).
 // Attach to inputs with data-user-picker attribute.
 // Dropdown is appended to <body> so it never gets clipped by modal overflow.
 function initUserPickers() {
-  const datalist = document.getElementById('samba-users-list');
-  if (!datalist) return;
+  const inputs = document.querySelectorAll('[data-user-picker]');
+  if (!inputs.length) return;
 
-  const allOptions = Array.from(datalist.options).map(o => o.value);
-  if (!allOptions.length) return;
+  let allOptions = [];
+
+  // Prefetch user list in background; render is deferred until data arrives
+  fetch('/api/users')
+    .then(function(r) { return r.ok ? r.json() : []; })
+    .then(function(users) { allOptions = users; })
+    .catch(function() { allOptions = []; });
 
   // One shared portal dropdown for all pickers on the page
   const drop = document.createElement('div');
@@ -201,7 +206,7 @@ function initUserPickers() {
     }
   }
 
-  document.querySelectorAll('[data-user-picker]').forEach(function(input) {
+  inputs.forEach(function(input) {
     input.addEventListener('focus', function() {
       activeInput = input;
       renderDrop(input);

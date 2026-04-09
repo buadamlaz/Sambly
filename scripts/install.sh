@@ -311,6 +311,12 @@ sambly ALL=(ALL) NOPASSWD: /usr/bin/smbpasswd
 sambly ALL=(ALL) NOPASSWD: /usr/bin/pdbedit
 sambly ALL=(ALL) NOPASSWD: /usr/bin/net
 sambly ALL=(ALL) NOPASSWD: /usr/bin/gpasswd
+sambly ALL=(ALL) NOPASSWD: /bin/mkdir
+sambly ALL=(ALL) NOPASSWD: /usr/bin/mkdir
+sambly ALL=(ALL) NOPASSWD: /bin/chown
+sambly ALL=(ALL) NOPASSWD: /usr/bin/chown
+sambly ALL=(ALL) NOPASSWD: /bin/chmod
+sambly ALL=(ALL) NOPASSWD: /usr/bin/chmod
 SUDOERS
 chmod 0440 /etc/sudoers.d/sambly
 
