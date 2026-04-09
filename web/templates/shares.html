@@ -36,7 +36,7 @@
     <div class="card">
       <div class="card-body">
         {{with .Data}}
-        {{if .}}
+        {{if .Shares}}
         <table class="table">
           <thead>
             <tr>
@@ -51,7 +51,7 @@
             </tr>
           </thead>
           <tbody>
-            {{range .}}
+            {{range .Shares}}
             <tr>
               <td><strong>{{.Name}}</strong></td>
               <td class="text-mono">{{.Path}}</td>
@@ -81,6 +81,10 @@
           <button class="btn btn-primary" data-open-modal="addShareModal">Add your first share</button>
         </div>
         {{end}}
+
+        <datalist id="samba-users-list">
+          {{range .Users}}<option value="{{.}}">{{end}}
+        </datalist>
         {{end}}
       </div>
     </div>
@@ -100,19 +104,16 @@
         <div class="form-row">
           <div class="form-group">
             <label>Share Name</label>
-            <input type="text" name="name" class="form-control"
-                   placeholder="e.g. Documents" required>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Documents" required>
           </div>
           <div class="form-group">
             <label>Path</label>
-            <input type="text" name="path" class="form-control"
-                   placeholder="/srv/samba/documents" required>
+            <input type="text" name="path" class="form-control" placeholder="/srv/samba/documents" required>
           </div>
         </div>
         <div class="form-group">
           <label>Comment</label>
-          <input type="text" name="comment" class="form-control"
-                 placeholder="Optional description">
+          <input type="text" name="comment" class="form-control" placeholder="Optional description">
         </div>
         <div class="form-row">
           <div class="form-group">
@@ -155,13 +156,11 @@
         <div class="form-row">
           <div class="form-group">
             <label>Create Mask</label>
-            <input type="text" name="create_mask" class="form-control"
-                   placeholder="0644" pattern="[0-7]{3,4}">
+            <input type="text" name="create_mask" class="form-control" placeholder="0644" pattern="[0-7]{3,4}">
           </div>
           <div class="form-group">
             <label>Directory Mask</label>
-            <input type="text" name="directory_mask" class="form-control"
-                   placeholder="0755" pattern="[0-7]{3,4}">
+            <input type="text" name="directory_mask" class="form-control" placeholder="0755" pattern="[0-7]{3,4}">
           </div>
         </div>
         <div class="form-group">

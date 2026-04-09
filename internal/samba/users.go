@@ -31,8 +31,18 @@ func ListUsers() ([]SambaUser, error) {
 	return listUsersFromPasswd()
 }
 
+// ListUsernames returns plain usernames of regular accounts (UID 1000-65533).
+// Reads /etc/passwd directly — no sudo required, always works.
+func ListUsernames() []string {
+	users, _ := listUsersFromPasswd()
+	names := make([]string, 0, len(users))
+	for _, u := range users {
+		names = append(names, u.Username)
+	}
+	return names
+}
+
 // listUsersFromPasswd reads /etc/passwd and returns accounts with UID >= 1000.
-// This is always readable without sudo and covers all Samba users we create.
 func listUsersFromPasswd() ([]SambaUser, error) {
 	data, err := os.ReadFile("/etc/passwd")
 	if err != nil {

@@ -343,7 +343,6 @@ StandardError=journal
 SyslogIdentifier=sambly
 PrivateTmp=yes
 ProtectSystem=yes
-ProtectHome=yes
 
 [Install]
 WantedBy=multi-user.target

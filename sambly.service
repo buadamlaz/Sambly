@@ -23,7 +23,6 @@ SyslogIdentifier=sambly
 # Note: NoNewPrivileges is intentionally omitted — sudo is required for smbd control
 PrivateTmp=yes
 ProtectSystem=yes
-ProtectHome=yes
 
 [Install]
 WantedBy=multi-user.target

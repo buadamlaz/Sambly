@@ -9,6 +9,12 @@ import (
 	"github.com/buadamlaz/Sambly/internal/security"
 )
 
+// SharesPageData holds the shares list and available usernames for the picker.
+type SharesPageData struct {
+	Shares []samba.Share
+	Users  []string
+}
+
 func (h *Handler) handleShares(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.requireSession(r)
 	if !ok {
@@ -22,7 +28,7 @@ func (h *Handler) handleShares(w http.ResponseWriter, r *http.Request) {
 		Username:   sess.Username,
 		CSRF:       sess.CSRFToken,
 		ActivePage: "shares",
-		Data:       shares,
+		Data:       SharesPageData{Shares: shares, Users: samba.ListUsernames()},
 	}
 	if err != nil {
 		pd.FlashErr = "Failed to read smb.conf: " + err.Error()
@@ -89,7 +95,10 @@ func (h *Handler) handleSharesEdit(w http.ResponseWriter, r *http.Request) {
 			Title:    "Edit Share — Sambly",
 			Username: sess.Username,
 			CSRF:     sess.CSRFToken,
-			Data:     share,
+			Data: struct {
+				Share *samba.Share
+				Users []string
+			}{Share: share, Users: samba.ListUsernames()},
 		})
 		return
 	}
@@ -222,6 +231,6 @@ func (h *Handler) sharesError(w http.ResponseWriter, sess *auth.Session, errMsg 
 		CSRF:       sess.CSRFToken,
 		ActivePage: "shares",
 		FlashErr:   errMsg,
-		Data:       shares,
+		Data:       SharesPageData{Shares: shares, Users: samba.ListUsernames()},
 	})
 }

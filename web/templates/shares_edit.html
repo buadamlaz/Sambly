@@ -20,38 +20,42 @@
     {{template "flash" .}}
 
     {{with .Data}}
+    <datalist id="samba-users-list">
+      {{range .Users}}<option value="{{.}}">{{end}}
+    </datalist>
+
     <div class="card">
       <div class="card-body">
         <form method="post" action="/shares/edit">
           {{template "csrf" $}}
-          <input type="hidden" name="original_name" value="{{.Name}}">
+          <input type="hidden" name="original_name" value="{{.Share.Name}}">
 
           <div class="form-row">
             <div class="form-group">
               <label>Share Name</label>
-              <input type="text" name="name" class="form-control" value="{{.Name}}" required>
+              <input type="text" name="name" class="form-control" value="{{.Share.Name}}" required>
             </div>
             <div class="form-group">
               <label>Path</label>
-              <input type="text" name="path" class="form-control" value="{{.Path}}" required>
+              <input type="text" name="path" class="form-control" value="{{.Share.Path}}" required>
             </div>
           </div>
           <div class="form-group">
             <label>Comment</label>
-            <input type="text" name="comment" class="form-control" value="{{.Comment}}">
+            <input type="text" name="comment" class="form-control" value="{{.Share.Comment}}">
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Valid Users</label>
               <input type="text" name="valid_users" class="form-control"
-                     value="{{.ValidUsers}}" placeholder="e.g. alice, bob, @finance"
+                     value="{{.Share.ValidUsers}}" placeholder="e.g. alice, bob, @finance"
                      data-user-picker autocomplete="off">
               <span class="form-hint">Comma-separated. Use @group for groups.</span>
             </div>
             <div class="form-group">
               <label>Write List</label>
               <input type="text" name="write_list" class="form-control"
-                     value="{{.WriteList}}" placeholder="e.g. alice, @admins"
+                     value="{{.Share.WriteList}}" placeholder="e.g. alice, @admins"
                      data-user-picker autocomplete="off">
             </div>
           </div>
@@ -59,22 +63,22 @@
             <div class="form-group">
               <label>Read Only</label>
               <select name="read_only" class="form-control">
-                <option value="no" {{if eq .ReadOnly "no"}}selected{{end}}>No (writable)</option>
-                <option value="yes" {{if eq .ReadOnly "yes"}}selected{{end}}>Yes (read only)</option>
+                <option value="no" {{if eq .Share.ReadOnly "no"}}selected{{end}}>No (writable)</option>
+                <option value="yes" {{if eq .Share.ReadOnly "yes"}}selected{{end}}>Yes (read only)</option>
               </select>
             </div>
             <div class="form-group">
               <label>Browseable</label>
               <select name="browseable" class="form-control">
-                <option value="yes" {{if eq .Browseable "yes"}}selected{{end}}>Yes</option>
-                <option value="no" {{if eq .Browseable "no"}}selected{{end}}>No</option>
+                <option value="yes" {{if eq .Share.Browseable "yes"}}selected{{end}}>Yes</option>
+                <option value="no" {{if eq .Share.Browseable "no"}}selected{{end}}>No</option>
               </select>
             </div>
             <div class="form-group">
               <label>Guest OK</label>
               <select name="guest_ok" class="form-control">
-                <option value="no" {{if eq .GuestOK "no"}}selected{{end}}>No</option>
-                <option value="yes" {{if eq .GuestOK "yes"}}selected{{end}}>Yes</option>
+                <option value="no" {{if eq .Share.GuestOK "no"}}selected{{end}}>No</option>
+                <option value="yes" {{if eq .Share.GuestOK "yes"}}selected{{end}}>Yes</option>
               </select>
             </div>
           </div>
@@ -82,12 +86,12 @@
             <div class="form-group">
               <label>Create Mask</label>
               <input type="text" name="create_mask" class="form-control"
-                     value="{{.CreateMask}}" placeholder="0644" pattern="[0-7]{3,4}">
+                     value="{{.Share.CreateMask}}" placeholder="0644" pattern="[0-7]{3,4}">
             </div>
             <div class="form-group">
               <label>Directory Mask</label>
               <input type="text" name="directory_mask" class="form-control"
-                     value="{{.DirectoryMask}}" placeholder="0755" pattern="[0-7]{3,4}">
+                     value="{{.Share.DirectoryMask}}" placeholder="0755" pattern="[0-7]{3,4}">
             </div>
           </div>
 
