@@ -96,9 +96,9 @@ document.addEventListener('DOMContentLoaded', function() {
   initUserPickers();
 });
 
-// ── User picker: portal dropdown, keyboard nav, comma-separated multi-value ───
-// Reads options from <datalist id="samba-users-list"> (server-rendered, synchronous).
-// Dropdown is appended to <body> so it is never clipped by modal overflow.
+// ── User picker: inline dropdown, keyboard nav, comma-separated multi-value ──
+// Reads options from <datalist id="samba-users-list"> (server-rendered).
+// Each input uses its own .user-picker-drop sibling inside .user-picker-wrap.
 function initUserPickers() {
   const inputs = document.querySelectorAll('[data-user-picker]');
   if (!inputs.length) return;
@@ -108,114 +108,79 @@ function initUserPickers() {
     ? Array.from(datalist.options).map(function(o) { return o.value; })
     : [];
 
-  // One shared portal dropdown for all pickers on the page
-  const drop = document.createElement('div');
-  drop.className = 'user-picker-drop';
-  document.body.appendChild(drop);
-
-  let activeInput = null;
-  let focusedIndex = -1;
-  let currentItems = [];
-
-  function getLastToken(input) {
-    const parts = input.value.split(',');
-    return parts[parts.length - 1].trim().toLowerCase();
-  }
-
-  function commitSelection(input, value) {
-    const parts = input.value.split(',');
-    parts[parts.length - 1] = ' ' + value;
-    input.value = parts.join(',').replace(/^\s*,\s*/, '') + ', ';
-    hideDrop();
-    input.focus();
-  }
-
-  function positionDrop(input) {
-    const rect = input.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-    const dropHeight = Math.min(220, allOptions.length * 38 + 2);
-
-    if (spaceBelow >= dropHeight || spaceBelow >= spaceAbove) {
-      // Show below
-      drop.style.top  = (rect.bottom + 4) + 'px';
-      drop.style.bottom = 'auto';
-      drop.classList.remove('up');
-    } else {
-      // Show above
-      drop.style.top  = 'auto';
-      drop.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
-      drop.classList.add('up');
-    }
-    drop.style.left  = rect.left + 'px';
-    drop.style.width = rect.width + 'px';
-  }
-
-  function renderDrop(input) {
-    const token = getLastToken(input);
-    const matches = token
-      ? allOptions.filter(u => u.toLowerCase().includes(token))
-      : allOptions;
-
-    drop.innerHTML = '';
-    currentItems = [];
-    focusedIndex = -1;
-
-    if (!matches.length) {
-      const empty = document.createElement('div');
-      empty.className = 'user-picker-empty';
-      empty.textContent = 'Kullanıcı bulunamadı';
-      drop.appendChild(empty);
-      currentItems = [];
-    } else {
-      matches.forEach(function(u) {
-        const item = document.createElement('div');
-        item.className = 'user-picker-item';
-        item.textContent = u;
-        item.addEventListener('mousedown', function(e) {
-          e.preventDefault();
-          commitSelection(input, u);
-        });
-        drop.appendChild(item);
-        currentItems.push(item);
-      });
-    }
-
-    positionDrop(input);
-    drop.classList.add('visible');
-  }
-
-  function hideDrop() {
-    drop.classList.remove('visible');
-    focusedIndex = -1;
-    currentItems = [];
-    activeInput = null;
-  }
-
-  function setFocus(idx) {
-    currentItems.forEach(function(el, i) {
-      el.classList.toggle('active', i === idx);
-    });
-    focusedIndex = idx;
-    if (currentItems[idx]) {
-      currentItems[idx].scrollIntoView({ block: 'nearest' });
-    }
-  }
-
   inputs.forEach(function(input) {
-    input.addEventListener('focus', function() {
-      activeInput = input;
-      renderDrop(input);
-    });
+    const wrap = input.closest('.user-picker-wrap');
+    if (!wrap) return;
+    const drop = wrap.querySelector('.user-picker-drop');
+    if (!drop) return;
 
-    input.addEventListener('input', function() {
-      activeInput = input;
-      renderDrop(input);
-    });
+    let focusedIndex = -1;
+    let currentItems = [];
 
-    input.addEventListener('blur', function() {
-      setTimeout(hideDrop, 160);
-    });
+    function getLastToken() {
+      const parts = input.value.split(',');
+      return parts[parts.length - 1].trim().toLowerCase();
+    }
+
+    function commitSelection(value) {
+      const parts = input.value.split(',');
+      parts[parts.length - 1] = ' ' + value;
+      input.value = parts.join(',').replace(/^\s*,\s*/, '') + ', ';
+      hideDrop();
+      input.focus();
+    }
+
+    function renderDrop() {
+      const token = getLastToken();
+      const matches = token
+        ? allOptions.filter(function(u) { return u.toLowerCase().includes(token); })
+        : allOptions;
+
+      drop.innerHTML = '';
+      currentItems = [];
+      focusedIndex = -1;
+
+      if (!matches.length) {
+        const empty = document.createElement('div');
+        empty.className = 'user-picker-empty';
+        empty.textContent = 'No users found';
+        drop.appendChild(empty);
+      } else {
+        matches.forEach(function(u) {
+          const item = document.createElement('div');
+          item.className = 'user-picker-item';
+          item.textContent = u;
+          item.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            commitSelection(u);
+          });
+          drop.appendChild(item);
+          currentItems.push(item);
+        });
+      }
+
+      drop.classList.add('visible');
+    }
+
+    function hideDrop() {
+      drop.classList.remove('visible');
+      focusedIndex = -1;
+      currentItems = [];
+    }
+
+    function setFocus(idx) {
+      currentItems.forEach(function(el, i) {
+        el.classList.toggle('active', i === idx);
+      });
+      focusedIndex = idx;
+      if (currentItems[idx]) {
+        currentItems[idx].scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    input.addEventListener('focus', renderDrop);
+    input.addEventListener('input', renderDrop);
+    input.addEventListener('blur', function() { setTimeout(hideDrop, 160); });
 
     input.addEventListener('keydown', function(e) {
       if (!drop.classList.contains('visible')) return;
@@ -227,23 +192,10 @@ function initUserPickers() {
         setFocus(Math.max(focusedIndex - 1, 0));
       } else if (e.key === 'Enter' && focusedIndex >= 0) {
         e.preventDefault();
-        commitSelection(input, currentItems[focusedIndex].textContent);
+        commitSelection(currentItems[focusedIndex].textContent);
       } else if (e.key === 'Escape') {
         hideDrop();
       }
     });
-  });
-
-  // Reposition on scroll/resize
-  window.addEventListener('scroll', function() {
-    if (activeInput && drop.classList.contains('visible')) {
-      positionDrop(activeInput);
-    }
-  }, true);
-
-  window.addEventListener('resize', function() {
-    if (activeInput && drop.classList.contains('visible')) {
-      positionDrop(activeInput);
-    }
   });
 }

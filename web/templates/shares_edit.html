@@ -47,16 +47,22 @@
           <div class="form-row">
             <div class="form-group">
               <label>Valid Users</label>
-              <input type="text" name="valid_users" class="form-control"
-                     value="{{.Share.ValidUsers}}" placeholder="e.g. alice, bob, @finance"
-                     data-user-picker autocomplete="off">
+              <div class="user-picker-wrap">
+                <input type="text" name="valid_users" class="form-control"
+                       value="{{.Share.ValidUsers}}" placeholder="e.g. alice, bob, @finance"
+                       data-user-picker autocomplete="off">
+                <div class="user-picker-drop"></div>
+              </div>
               <span class="form-hint">Comma-separated. Use @group for groups.</span>
             </div>
             <div class="form-group">
               <label>Write List</label>
-              <input type="text" name="write_list" class="form-control"
-                     value="{{.Share.WriteList}}" placeholder="e.g. alice, @admins"
-                     data-user-picker autocomplete="off">
+              <div class="user-picker-wrap">
+                <input type="text" name="write_list" class="form-control"
+                       value="{{.Share.WriteList}}" placeholder="e.g. alice, @admins"
+                       data-user-picker autocomplete="off">
+                <div class="user-picker-drop"></div>
+              </div>
             </div>
           </div>
           <div class="form-row">

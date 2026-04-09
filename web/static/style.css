@@ -524,9 +524,10 @@ main > .stats-grid + .card {
   backdrop-filter: blur(2px);
   z-index: 200;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .modal {
@@ -535,8 +536,8 @@ main > .stats-grid + .card {
   border-radius: var(--radius);
   width: 100%;
   max-width: 460px;
-  max-height: 90vh;
-  overflow-y: auto;
+  overflow: visible;
+  margin: auto;
 }
 
 .modal-lg { max-width: 700px; }
@@ -817,9 +818,16 @@ code {
   font-size: 13px;
 }
 
-/* ── User picker autocomplete (portal dropdown) ────────────────────────────── */
+/* ── User picker autocomplete ────────────────────────────────────────────── */
+.user-picker-wrap {
+  position: relative;
+}
+
 .user-picker-drop {
-  position: fixed;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
   background: var(--bg-card);
   border: 1px solid var(--accent);
   border-radius: 8px;
@@ -828,17 +836,14 @@ code {
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
   opacity: 0;
-  transform: translateY(-6px);
+  transform: translateY(-4px);
   transition: opacity 0.13s ease, transform 0.13s ease;
   pointer-events: none;
-  min-width: 160px;
-}
-
-.user-picker-drop.up {
-  transform: translateY(6px);
+  display: none;
 }
 
 .user-picker-drop.visible {
+  display: block;
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
