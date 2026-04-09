@@ -227,6 +227,27 @@ Please report security issues **privately** via GitHub Security Advisories, not 
 
 For bugs and feature requests, open a GitHub issue.
 
+## Uninstallation
+
+To remove Sambly from your system:
+
+```bash
+cd Sambly
+sudo bash scripts/install.sh --uninstall
+```
+
+The uninstall process will:
+
+1. Stop and disable the `sambly` systemd service
+2. Remove the installed binary and files from `/opt/sambly`
+3. Remove application data from `/var/lib/sambly`
+4. Remove the `sambly` system user and group
+5. Remove the sudoers rules from `/etc/sudoers.d/sambly`
+6. Optionally remove Samba (`smbd`, `nmbd`) if you choose
+7. Optionally restore or remove `smb.conf`
+
+> Data removed during uninstall cannot be recovered. smb.conf backups are stored in `/var/lib/sambly/backups/` — copy them before uninstalling if needed.
+
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
