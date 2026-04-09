@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="Sambly Logo" width="180" />
+<img src="assets/logo.png" alt="Sambly Logo" width="300" />
 
 # Sambly — Samba Management, Simplified
 
