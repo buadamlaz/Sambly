@@ -24,7 +24,12 @@
       <div class="card-body">
         {{with .Data}}
         {{if .}}
-        <table class="table">
+        <div class="table-search-wrap">
+          <input type="text" class="form-control table-search"
+                 placeholder="Search groups…"
+                 data-search-for="groupsTable" autocomplete="off">
+        </div>
+        <table id="groupsTable" class="table">
           <thead>
             <tr>
               <th>Group Name</th>

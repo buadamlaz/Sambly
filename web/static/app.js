@@ -94,7 +94,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ── User picker autocomplete ──────────────────────────────────────────────
   initUserPickers();
+
+  // ── Table search ──────────────────────────────────────────────────────────
+  initTableSearch();
 });
+
+// ── Table search: filters rows by text content ────────────────────────────────
+function initTableSearch() {
+  document.querySelectorAll('[data-search-for]').forEach(function(input) {
+    const table = document.getElementById(input.dataset.searchFor);
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    input.addEventListener('input', function() {
+      const q = input.value.trim().toLowerCase();
+      Array.from(tbody.rows).forEach(function(row) {
+        row.style.display = (!q || row.textContent.toLowerCase().includes(q)) ? '' : 'none';
+      });
+    });
+  });
+}
 
 // ── User picker: inline dropdown, keyboard nav, comma-separated multi-value ──
 // Reads options from <datalist id="samba-users-list"> (server-rendered).

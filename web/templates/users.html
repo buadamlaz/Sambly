@@ -23,7 +23,12 @@
       <div class="card-body">
         {{with .Data}}
         {{if .}}
-        <table class="table">
+        <div class="table-search-wrap">
+          <input type="text" class="form-control table-search"
+                 placeholder="Search users…"
+                 data-search-for="usersTable" autocomplete="off">
+        </div>
+        <table id="usersTable" class="table">
           <thead>
             <tr>
               <th>Username</th>

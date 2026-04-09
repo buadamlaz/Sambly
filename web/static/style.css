@@ -889,6 +889,15 @@ code {
   font-style: italic;
 }
 
+/* ── Table search ────────────────────────────────────────────────────────────── */
+.table-search-wrap {
+  margin-bottom: 14px;
+}
+
+.table-search {
+  max-width: 320px;
+}
+
 /* ── Checkbox label ──────────────────────────────────────────────────────────── */
 .checkbox-label {
   display: flex;
