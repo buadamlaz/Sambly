@@ -817,34 +817,69 @@ code {
   font-size: 13px;
 }
 
-/* ── User picker autocomplete ──────────────────────────────────────────────── */
-.user-picker-wrap {
-  position: relative;
+/* ── User picker autocomplete (portal dropdown) ────────────────────────────── */
+.user-picker-drop {
+  position: fixed;
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  z-index: 9999;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.13s ease, transform 0.13s ease;
+  pointer-events: none;
+  min-width: 160px;
 }
 
-.user-picker-drop {
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 0;
-  right: 0;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  z-index: 200;
-  max-height: 200px;
-  overflow-y: auto;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+.user-picker-drop.up {
+  transform: translateY(6px);
+}
+
+.user-picker-drop.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .user-picker-item {
-  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 14px;
   cursor: pointer;
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: var(--text-secondary);
+  transition: background 0.1s, color 0.1s;
+  user-select: none;
+}
+
+.user-picker-item::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
   transition: background 0.1s;
 }
 
-.user-picker-item:hover {
-  background: var(--bg-hover, rgba(255,255,255,0.06));
+.user-picker-item:hover,
+.user-picker-item.active {
+  background: rgba(79, 142, 247, 0.12);
   color: var(--accent);
+}
+
+.user-picker-item:hover::before,
+.user-picker-item.active::before {
+  background: var(--accent);
+}
+
+.user-picker-empty {
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
 }

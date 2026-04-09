@@ -48,20 +48,14 @@
           <div class="form-row">
             <div class="form-group">
               <label>Valid Users</label>
-              <div class="user-picker-wrap">
-                <input type="text" name="valid_users" class="form-control"
-                       value="{{.Share.ValidUsers}}" placeholder="alice, bob, @finance" data-user-picker>
-                <div class="user-picker-drop" style="display:none"></div>
-              </div>
-              <span class="form-hint">Type to search users. Use @group for groups.</span>
+              <input type="text" name="valid_users" class="form-control"
+                     value="{{.Share.ValidUsers}}" placeholder="Kullanıcı ara…" data-user-picker autocomplete="off">
+              <span class="form-hint">Virgülle ayır. Grup için @grupadi kullan.</span>
             </div>
             <div class="form-group">
               <label>Write List</label>
-              <div class="user-picker-wrap">
-                <input type="text" name="write_list" class="form-control"
-                       value="{{.Share.WriteList}}" placeholder="alice, @admins" data-user-picker>
-                <div class="user-picker-drop" style="display:none"></div>
-              </div>
+              <input type="text" name="write_list" class="form-control"
+                     value="{{.Share.WriteList}}" placeholder="Kullanıcı ara…" data-user-picker autocomplete="off">
             </div>
           </div>
           <div class="form-row">

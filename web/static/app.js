@@ -96,59 +96,153 @@ document.addEventListener('DOMContentLoaded', function() {
   initUserPickers();
 });
 
-// Multi-value user picker: autocomplete on comma-separated inputs.
+// ── User picker: portal dropdown, keyboard nav, comma-separated multi-value ───
 // Reads options from <datalist id="samba-users-list">.
-// Attach to inputs with: data-user-picker attribute.
-// Wrapper div .user-picker-wrap must already be in HTML (next sibling is .user-picker-drop).
+// Attach to inputs with data-user-picker attribute.
+// Dropdown is appended to <body> so it never gets clipped by modal overflow.
 function initUserPickers() {
   const datalist = document.getElementById('samba-users-list');
   if (!datalist) return;
 
-  const options = Array.from(datalist.options).map(o => o.value);
+  const allOptions = Array.from(datalist.options).map(o => o.value);
+  if (!allOptions.length) return;
 
-  document.querySelectorAll('[data-user-picker]').forEach(function(input) {
-    // The .user-picker-drop div is already in the HTML as a sibling
-    const wrap = input.closest('.user-picker-wrap');
-    if (!wrap) return;
-    const drop = wrap.querySelector('.user-picker-drop');
-    if (!drop) return;
+  // One shared portal dropdown for all pickers on the page
+  const drop = document.createElement('div');
+  drop.className = 'user-picker-drop';
+  document.body.appendChild(drop);
 
-    function getLastToken() {
-      const parts = input.value.split(',');
-      return parts[parts.length - 1].trim().toLowerCase();
+  let activeInput = null;
+  let focusedIndex = -1;
+  let currentItems = [];
+
+  function getLastToken(input) {
+    const parts = input.value.split(',');
+    return parts[parts.length - 1].trim().toLowerCase();
+  }
+
+  function commitSelection(input, value) {
+    const parts = input.value.split(',');
+    parts[parts.length - 1] = ' ' + value;
+    input.value = parts.join(',').replace(/^\s*,\s*/, '') + ', ';
+    hideDrop();
+    input.focus();
+  }
+
+  function positionDrop(input) {
+    const rect = input.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const dropHeight = Math.min(220, allOptions.length * 38 + 2);
+
+    if (spaceBelow >= dropHeight || spaceBelow >= spaceAbove) {
+      // Show below
+      drop.style.top  = (rect.bottom + 4) + 'px';
+      drop.style.bottom = 'auto';
+      drop.classList.remove('up');
+    } else {
+      // Show above
+      drop.style.top  = 'auto';
+      drop.style.bottom = (window.innerHeight - rect.top + 4) + 'px';
+      drop.classList.add('up');
     }
+    drop.style.left  = rect.left + 'px';
+    drop.style.width = rect.width + 'px';
+  }
 
-    function showDrop() {
-      const token = getLastToken();
-      if (!token) { drop.style.display = 'none'; return; }
+  function renderDrop(input) {
+    const token = getLastToken(input);
+    const matches = token
+      ? allOptions.filter(u => u.toLowerCase().includes(token))
+      : allOptions;
 
-      const matches = options.filter(u => u.toLowerCase().startsWith(token));
-      if (!matches.length) { drop.style.display = 'none'; return; }
+    drop.innerHTML = '';
+    currentItems = [];
+    focusedIndex = -1;
 
-      drop.innerHTML = '';
+    if (!matches.length) {
+      const empty = document.createElement('div');
+      empty.className = 'user-picker-empty';
+      empty.textContent = 'Kullanıcı bulunamadı';
+      drop.appendChild(empty);
+      currentItems = [];
+    } else {
       matches.forEach(function(u) {
         const item = document.createElement('div');
         item.className = 'user-picker-item';
         item.textContent = u;
         item.addEventListener('mousedown', function(e) {
-          e.preventDefault(); // don't blur input before we update value
-          const parts = input.value.split(',');
-          parts[parts.length - 1] = ' ' + u;
-          // Add trailing comma+space so user can immediately type next user
-          input.value = parts.join(',').replace(/^,\s*/, '') + ', ';
-          drop.style.display = 'none';
-          input.focus();
+          e.preventDefault();
+          commitSelection(input, u);
         });
         drop.appendChild(item);
+        currentItems.push(item);
       });
-      drop.style.display = 'block';
     }
 
-    input.addEventListener('input', showDrop);
-    input.addEventListener('focus', showDrop);
-    input.addEventListener('blur', function() {
-      // Delay hide so mousedown on item fires first
-      setTimeout(function() { drop.style.display = 'none'; }, 180);
+    positionDrop(input);
+    drop.classList.add('visible');
+  }
+
+  function hideDrop() {
+    drop.classList.remove('visible');
+    focusedIndex = -1;
+    currentItems = [];
+    activeInput = null;
+  }
+
+  function setFocus(idx) {
+    currentItems.forEach(function(el, i) {
+      el.classList.toggle('active', i === idx);
     });
+    focusedIndex = idx;
+    if (currentItems[idx]) {
+      currentItems[idx].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  document.querySelectorAll('[data-user-picker]').forEach(function(input) {
+    input.addEventListener('focus', function() {
+      activeInput = input;
+      renderDrop(input);
+    });
+
+    input.addEventListener('input', function() {
+      activeInput = input;
+      renderDrop(input);
+    });
+
+    input.addEventListener('blur', function() {
+      setTimeout(hideDrop, 160);
+    });
+
+    input.addEventListener('keydown', function(e) {
+      if (!drop.classList.contains('visible')) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setFocus(Math.min(focusedIndex + 1, currentItems.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setFocus(Math.max(focusedIndex - 1, 0));
+      } else if (e.key === 'Enter' && focusedIndex >= 0) {
+        e.preventDefault();
+        commitSelection(input, currentItems[focusedIndex].textContent);
+      } else if (e.key === 'Escape') {
+        hideDrop();
+      }
+    });
+  });
+
+  // Reposition on scroll/resize
+  window.addEventListener('scroll', function() {
+    if (activeInput && drop.classList.contains('visible')) {
+      positionDrop(activeInput);
+    }
+  }, true);
+
+  window.addEventListener('resize', function() {
+    if (activeInput && drop.classList.contains('visible')) {
+      positionDrop(activeInput);
+    }
   });
 }
