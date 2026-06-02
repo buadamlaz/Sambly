@@ -1,0 +1,211 @@
+{{define "title"}}{{.Title}}{{end}}
+{{define "body"}}
+{{template "sidebar" .}}
+<div class="main">
+  {{template "topbar" .}}
+  <div class="content">
+    {{template "flashes" .}}
+    {{with .Data}}
+
+    {{/* ── Service Control ───────────────────────────── */}}
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <h2>Samba Service</h2>
+        {{if .SambaInstalled}}
+          {{if .ServiceStatus.Active}}
+          <span class="service-badge active"><span class="badge-dot"></span>Active</span>
+          {{else}}
+          <span class="service-badge inactive"><span class="badge-dot"></span>Inactive</span>
+          {{end}}
+        {{else}}
+        <span class="badge badge-red">Not installed</span>
+        {{end}}
+      </div>
+      <div class="card-body">
+        {{if .SambaInstalled}}
+        <div class="text-muted" style="font-size:12px;margin-bottom:14px">
+          {{.ServiceStatus.Status}}{{if .ServiceStatus.Version}} &nbsp;·&nbsp; {{.ServiceStatus.Version}}{{end}}
+          {{if .ServiceStatus.Enabled}}&nbsp;·&nbsp;<span class="badge badge-blue">Autostart on</span>{{else}}&nbsp;·&nbsp;<span class="badge badge-gray">Autostart off</span>{{end}}
+        </div>
+        {{end}}
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:{{if .SambaInstalled}}16px{{else}}0{{end}}">
+          {{range $a := (slice4 "start" "stop" "restart" "reload")}}
+          <form method="POST" action="/settings/service">
+            <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+            <input type="hidden" name="action" value="{{$a.Name}}">
+            <button type="submit" class="btn {{$a.Class}}">{{$a.Label}}</button>
+          </form>
+          {{end}}
+        </div>
+        {{if .SambaInstalled}}
+        <button class="btn btn-ghost btn-sm"
+          hx-get="/settings/validate"
+          hx-target="#testparm-out"
+          hx-swap="innerHTML"
+          hx-on::after-request="document.getElementById('testparm-out').style.display='block'">
+          Validate smb.conf (testparm)
+        </button>
+        <pre id="testparm-out" style="display:none"></pre>
+        {{end}}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+
+      {{/* ── Server Identity + Printer Sharing ─────── */}}
+      <div class="card">
+        <div class="card-header"><h2>Server Identity</h2></div>
+        <div class="card-body">
+          <form method="POST" action="/settings/server">
+            <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+            <div class="form-group">
+              <label>Workgroup / Domain</label>
+              <input type="text" name="workgroup" value="{{.Global.Workgroup}}" placeholder="WORKGROUP">
+              <div class="field-hint">Windows workgroup or AD domain name</div>
+            </div>
+            <div class="form-group">
+              <label>Server Description</label>
+              <input type="text" name="server_string" value="{{.Global.ServerString}}" placeholder="Samba Server">
+              <div class="field-hint">Shown in Network → description column</div>
+            </div>
+            <div class="form-group">
+              <label>NetBIOS Name</label>
+              <input type="text" name="netbios_name" value="{{.Global.NetbiosName}}" placeholder="(default: hostname)">
+              <div class="field-hint">Windows network name (leave empty to use hostname)</div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+          </form>
+
+          <div style="border-top:1px solid var(--border);margin:20px 0"></div>
+
+          {{/* Printer Sharing */}}
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div>
+              <div style="font-size:13px;font-weight:600">Printer Sharing</div>
+              <div class="field-hint">Adds a <code>[printers]</code> section — shares all system printers on the network</div>
+            </div>
+            {{if .PrinterSharing}}
+            <span class="badge badge-green">Enabled</span>
+            {{else}}
+            <span class="badge badge-gray">Disabled</span>
+            {{end}}
+          </div>
+          <form method="POST" action="/settings/printers">
+            <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+            {{if .PrinterSharing}}
+            <input type="hidden" name="printer_sharing" value="no">
+            <button type="submit" class="btn btn-danger btn-sm">Disable Printer Sharing</button>
+            {{else}}
+            <input type="hidden" name="printer_sharing" value="yes">
+            <button type="submit" class="btn btn-success btn-sm">Enable Printer Sharing</button>
+            {{end}}
+          </form>
+        </div>
+      </div>
+
+      {{/* ── Access Control ────────────────────────────── */}}
+      <div class="card">
+        <div class="card-header"><h2>Access Control</h2></div>
+        <div class="card-body">
+          <form method="POST" action="/settings/access">
+            <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+            <div class="form-group">
+              <label>Security Mode</label>
+              <select name="security">
+                <option value="" {{if eq .Global.Security ""}}selected{{end}}>— default (user) —</option>
+                <option value="user"     {{if eq .Global.Security "user"}}selected{{end}}>user — username/password</option>
+                <option value="share"    {{if eq .Global.Security "share"}}selected{{end}}>share — per-share password (legacy)</option>
+                <option value="domain"   {{if eq .Global.Security "domain"}}selected{{end}}>domain — Windows domain controller</option>
+                <option value="ads"      {{if eq .Global.Security "ads"}}selected{{end}}>ads — Active Directory</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Map to Guest</label>
+              <select name="map_to_guest">
+                <option value="" {{if eq .Global.MapToGuest ""}}selected{{end}}>— default (Never) —</option>
+                <option value="Never"        {{if eq .Global.MapToGuest "Never"}}selected{{end}}>Never — reject unknown users</option>
+                <option value="Bad User"     {{if eq .Global.MapToGuest "Bad User"}}selected{{end}}>Bad User — unknown users become guest</option>
+                <option value="Bad Password" {{if eq .Global.MapToGuest "Bad Password"}}selected{{end}}>Bad Password — wrong password becomes guest</option>
+              </select>
+              <div class="field-hint">What to do with users that fail authentication</div>
+            </div>
+            <div class="form-group">
+              <label>Guest Account</label>
+              <input type="text" name="guest_account" value="{{.Global.GuestAccount}}" placeholder="nobody">
+              <div class="field-hint">System account used for guest connections</div>
+            </div>
+            <div class="form-group">
+              <label>Hosts Allow</label>
+              <input type="text" name="hosts_allow" value="{{.Global.HostsAllow}}" placeholder="192.168.1. 127.">
+              <div class="field-hint">Allowed IPs/subnets, space-separated (empty = all)</div>
+            </div>
+            <div class="form-group">
+              <label>Hosts Deny</label>
+              <input type="text" name="hosts_deny" value="{{.Global.HostsDeny}}" placeholder="">
+              <div class="field-hint">Denied IPs/subnets, space-separated</div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+
+    {{/* ── Logging ───────────────────────────────────── */}}
+    <div class="card" style="max-width:480px;margin-bottom:20px">
+      <div class="card-header"><h2>Logging</h2></div>
+      <div class="card-body">
+        <form method="POST" action="/settings/logging">
+          <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+          <div class="form-group">
+            <label>Log Level</label>
+            <select name="log_level">
+              {{range $v := (logLevels)}}
+              <option value="{{$v.Val}}" {{if eq $.Data.Global.LogLevel $v.Val}}selected{{end}}>{{$v.Label}}</option>
+              {{end}}
+            </select>
+            <div class="field-hint">Higher levels log more detail (0 = minimal, 3+ = verbose)</div>
+          </div>
+          <div class="form-group">
+            <label>Max Log Size (KB)</label>
+            <input type="number" name="max_log_size" value="{{.Global.MaxLogSize}}" placeholder="5000" min="0">
+            <div class="field-hint">Maximum size per log file (0 = unlimited)</div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">Save</button>
+        </form>
+      </div>
+    </div>
+
+    {{/* ── smb.conf Editor ───────────────────────────── */}}
+    <div class="card" x-data="{confirm:false}">
+      <div class="card-header">
+        <h2>smb.conf Editor</h2>
+        <span class="badge badge-red">Advanced</span>
+      </div>
+      <div class="card-body">
+        <div class="flash warn" style="margin-bottom:16px">
+          ⚠ Changes are validated with <code>testparm</code> before saving. A <code>.bak</code> backup is created automatically.
+        </div>
+        <form method="POST" action="/settings/smbconf" @submit.prevent="confirm ? $el.submit() : (confirm=true)">
+          <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+          <textarea name="smbconf" rows="20" spellcheck="false"
+            style="font-family:monospace;font-size:13px;line-height:1.6;resize:vertical;width:100%;padding:12px;border:1px solid var(--border);border-radius:6px;outline:none;background:#1e2430;color:#e2e8f0">{{.SmbConf}}</textarea>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+            <button type="submit" class="btn btn-danger">
+              <span x-show="!confirm">Save smb.conf</span>
+              <span x-show="confirm" x-cloak>⚠ Click again to confirm</span>
+            </button>
+            <span x-show="confirm" x-cloak class="text-muted" style="font-size:13px">
+              This will overwrite the current configuration.
+              <button type="button" class="btn btn-secondary btn-sm" style="margin-left:8px" @click="confirm=false">Cancel</button>
+            </span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {{end}}
+  </div>
+  {{template "footer" .}}
+</div>
+{{end}}

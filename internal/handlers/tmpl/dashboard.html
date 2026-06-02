@@ -1,0 +1,73 @@
+{{define "title"}}{{.Title}}{{end}}
+{{define "body"}}
+{{template "sidebar" .}}
+<div class="main">
+  {{template "topbar" .}}
+  <div class="content">
+    {{template "flashes" .}}
+    {{with .Data}}
+    {{if not .SambaInstalled}}
+    <div class="flash error">Samba is not installed on this system. Run the install script or install samba manually.</div>
+    {{end}}
+
+    <div class="stats">
+      <div class="stat-card">
+        <a href="/users">
+          <div class="stat-label">SMB Users</div>
+          <div class="stat-value">{{.UserCount}}</div>
+        </a>
+      </div>
+      <div class="stat-card">
+        <a href="/shares">
+          <div class="stat-label">Shares</div>
+          <div class="stat-value">{{.ShareCount}}</div>
+        </a>
+      </div>
+      <div class="stat-card">
+        <a href="/groups">
+          <div class="stat-label">Groups</div>
+          <div class="stat-value">{{.GroupCount}}</div>
+        </a>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Samba Service</div>
+        {{if .ServiceStatus.Active}}
+        <div class="service-badge active" style="font-size:14px;padding:6px 12px;margin-top:8px"><span class="badge-dot"></span>Active</div>
+        {{else}}
+        <div class="service-badge inactive" style="font-size:14px;padding:6px 12px;margin-top:8px"><span class="badge-dot"></span>Inactive</div>
+        {{end}}
+        <div style="font-size:11px;color:#6b7280;margin-top:4px">{{.ServiceStatus.Status}}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Recent Activity</h2>
+        <a href="/logs" class="btn btn-ghost btn-sm">View all</a>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Time</th><th>User</th><th>Action</th><th>Detail</th><th>IP</th></tr>
+          </thead>
+          <tbody>
+            {{range .RecentLogs}}
+            <tr>
+              <td class="text-muted" style="white-space:nowrap">{{.CreatedAt.Format "2006-01-02 15:04"}}</td>
+              <td><strong>{{.Actor}}</strong></td>
+              <td><span class="badge badge-blue">{{.Action}}</span></td>
+              <td>{{.Detail}}</td>
+              <td class="text-muted">{{.IP}}</td>
+            </tr>
+            {{else}}
+            <tr><td colspan="5" class="empty">No activity yet.</td></tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {{end}}
+  </div>
+  {{template "footer" .}}
+</div>
+{{end}}

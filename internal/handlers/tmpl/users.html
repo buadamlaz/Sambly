@@ -1,0 +1,197 @@
+{{define "title"}}{{.Title}}{{end}}
+{{define "body"}}
+{{template "sidebar" .}}
+<div class="main">
+  {{template "topbar" .}}
+  <div class="content">
+    {{template "flashes" .}}
+
+    <div class="card" x-data="{addOpen:false,pwOpen:false,delOpen:false,grpOpen:false,pwUser:'',delUser:'',grpUser:''}">
+      <div class="card-header">
+        <h2>SMB Users</h2>
+        <button class="btn btn-primary btn-sm" @click="addOpen=true">+ Add User</button>
+      </div>
+      <div class="card-body" style="padding-bottom:0">
+        <div class="search-box">
+          <svg class="search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Search users..." id="userSearch" oninput="filterTable('userSearch','userTable')">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="userTable">
+          <thead>
+            <tr><th>Username</th><th>Full Name</th><th>UID</th><th>Groups</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            {{range .Data.Users}}
+            <tr>
+              <td><strong>{{.User.Username}}</strong></td>
+              <td class="text-muted">{{if .User.FullName}}{{.User.FullName}}{{else}}—{{end}}</td>
+              <td class="text-muted">{{.User.UID}}</td>
+              <td>
+                <div class="tag-list">
+                  {{range .MemberOf}}
+                  <span class="badge badge-gray">{{.}}</span>
+                  {{else}}
+                  <span class="text-muted" style="font-size:12px">—</span>
+                  {{end}}
+                </div>
+              </td>
+              <td>
+                {{if .User.Disabled}}
+                <span class="badge badge-red">Disabled</span>
+                {{else}}
+                <span class="badge badge-green">Active</span>
+                {{end}}
+              </td>
+              <td>
+                <div class="btn-group">
+                  <button class="btn btn-ghost btn-sm" @click="pwUser='{{.User.Username}}';pwOpen=true">Password</button>
+                  <button class="btn btn-ghost btn-sm" @click="grpUser='{{.User.Username}}';grpOpen=true">+ Group</button>
+                  {{if .User.Disabled}}
+                  <form method="POST" action="/users/toggle" style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+                    <input type="hidden" name="username" value="{{.User.Username}}">
+                    <input type="hidden" name="action" value="enable">
+                    <button class="btn btn-success btn-sm" type="submit">Enable</button>
+                  </form>
+                  {{else}}
+                  <form method="POST" action="/users/toggle" style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+                    <input type="hidden" name="username" value="{{.User.Username}}">
+                    <input type="hidden" name="action" value="disable">
+                    <button class="btn btn-warn btn-sm" type="submit">Disable</button>
+                  </form>
+                  {{end}}
+                  <button class="btn btn-danger btn-sm" @click="delUser='{{.User.Username}}';delOpen=true">Delete</button>
+                </div>
+              </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="6" class="empty">No SMB users found.</td></tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Add User Modal -->
+      <div class="modal-backdrop" x-show="addOpen" x-cloak @click.self="addOpen=false">
+        <div class="modal" @click.stop>
+          <div class="modal-header">
+            <h3>Add SMB User</h3>
+            <button class="modal-close" @click="addOpen=false">&times;</button>
+          </div>
+          <form method="POST" action="/users/add">
+            <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+            <div class="modal-body">
+              <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" required pattern="[a-zA-Z0-9_\-\.]{1,32}" placeholder="e.g. john">
+              </div>
+              <div class="form-group">
+                <label>Full Name <span class="text-muted" style="font-weight:400;text-transform:none">(optional)</span></label>
+                <input type="text" name="full_name" placeholder="e.g. John Doe" maxlength="64">
+              </div>
+              <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required minlength="6">
+              </div>
+              <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" required minlength="6">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="addOpen=false">Cancel</button>
+              <button type="submit" class="btn btn-primary">Add User</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Change Password Modal -->
+      <div class="modal-backdrop" x-show="pwOpen" x-cloak @click.self="pwOpen=false">
+        <div class="modal" @click.stop>
+          <div class="modal-header">
+            <h3>Change Password — <span x-text="pwUser"></span></h3>
+            <button class="modal-close" @click="pwOpen=false">&times;</button>
+          </div>
+          <form method="POST" action="/users/password">
+            <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+            <input type="hidden" name="username" :value="pwUser">
+            <div class="modal-body">
+              <div class="form-group">
+                <label>New Password</label>
+                <input type="password" name="password" required minlength="6">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="pwOpen=false">Cancel</button>
+              <button type="submit" class="btn btn-primary">Change Password</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Add to Group Modal -->
+      <div class="modal-backdrop" x-show="grpOpen" x-cloak @click.self="grpOpen=false">
+        <div class="modal" @click.stop>
+          <div class="modal-header">
+            <h3>Add <span x-text="grpUser"></span> to Group</h3>
+            <button class="modal-close" @click="grpOpen=false">&times;</button>
+          </div>
+          <form method="POST" action="/groups/assign">
+            <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+            <input type="hidden" name="username" :value="grpUser">
+            <div class="modal-body">
+              <div class="form-group">
+                <label>Select Group</label>
+                <select name="group" required>
+                  <option value="">— choose a group —</option>
+                  {{range .Data.AllGroups}}
+                  <option value="{{.Name}}">{{.Name}}</option>
+                  {{end}}
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="grpOpen=false">Cancel</button>
+              <button type="submit" class="btn btn-primary">Add to Group</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Delete Confirm Modal -->
+      <div class="modal-backdrop" x-show="delOpen" x-cloak @click.self="delOpen=false">
+        <div class="modal" @click.stop>
+          <div class="modal-header">
+            <h3>Delete User</h3>
+            <button class="modal-close" @click="delOpen=false">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to delete <strong x-text="delUser"></strong>? This will remove the Linux system user and all Samba credentials. This action cannot be undone.</p>
+          </div>
+          <form method="POST" action="/users/delete">
+            <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+            <input type="hidden" name="username" :value="delUser">
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="delOpen=false">Cancel</button>
+              <button type="submit" class="btn btn-danger">Delete User</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{template "footer" .}}
+</div>
+<script>
+function filterTable(inputId, tableId){
+  const q=document.getElementById(inputId).value.toLowerCase();
+  document.querySelectorAll('#'+tableId+' tbody tr').forEach(tr=>{
+    tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
+</script>
+{{end}}

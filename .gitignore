@@ -1,0 +1,8 @@
+sambly
+sambly-*
+*.exe
+*.test
+*.out
+/dist/
+/var/
+initial-credentials.txt

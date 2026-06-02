@@ -1,0 +1,47 @@
+{{define "title"}}Login — Sambly{{end}}
+{{define "extra_head"}}
+<style>
+body{background:#1e2430;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:0;padding:20px}
+.login-card{background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:100%;max-width:380px;padding:36px}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo h1{font-size:24px;font-weight:800;color:#1e2430;letter-spacing:-.5px}
+.login-logo p{font-size:12px;color:#6b7280;margin-top:4px}
+.login-footer{margin-top:24px;text-align:center;font-size:11px;color:#64748b;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.login-footer a{color:#94a3b8;text-decoration:none;font-weight:500}
+.login-footer a:hover{color:#cbd5e1}
+.login-footer .footer-dot{opacity:.4}
+</style>
+{{end}}
+{{define "body"}}
+<div class="login-card">
+  <div class="login-logo">
+    <h1>Sambly</h1>
+    <p>Samba Web Manager</p>
+  </div>
+  {{if .Flash}}
+  <div class="flash success">{{.Flash}}</div>
+  {{end}}
+  {{if .Error}}
+  <div class="flash error">{{.Error}}</div>
+  {{end}}
+  <form method="POST" action="/login">
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" name="username" autofocus autocomplete="username" required>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" name="password" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:10px">Sign in</button>
+  </form>
+</div>
+<footer class="login-footer">
+  <span style="font-weight:700;color:#94a3b8">Sambly</span>
+  <span style="font-family:monospace;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px;color:#94a3b8">v{{appVersion}}</span>
+  <span class="footer-dot">·</span>
+  <a href="https://github.com/buadamlaz/Sambly" target="_blank" rel="noopener">@buadamlaz</a>
+  <span class="footer-dot">·</span>
+  <a href="https://github.com/buadamlaz/Sambly" target="_blank" rel="noopener">GitHub ↗</a>
+</footer>
+{{end}}

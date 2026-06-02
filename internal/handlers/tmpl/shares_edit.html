@@ -1,0 +1,237 @@
+{{define "title"}}{{.Title}}{{end}}
+{{define "body"}}
+{{template "sidebar" .}}
+<div class="main">
+  {{template "topbar" .}}
+  <div class="content">
+    {{template "flashes" .}}
+    {{with .Data}}
+
+    <script>
+    const _availUsers = [{{range .Users}}"{{.}}",{{end}}];
+    const _availGroups = [{{range .Groups}}"{{.}}",{{end}}];
+    const _shareOptions = [..._availUsers, ..._availGroups];
+    </script>
+
+    <div class="card" style="max-width:640px">
+      <div class="card-header">
+        <h2>Edit Share — {{.Share.Name}}</h2>
+        <a href="/shares" class="btn btn-secondary btn-sm">← Back</a>
+      </div>
+      <div class="card-body">
+        <form method="POST" action="/shares/edit" style="display:flex;flex-direction:column;gap:14px">
+          <input type="hidden" name="csrf_token" value="{{$.CSRF}}">
+          <input type="hidden" name="original_name" value="{{.Share.Name}}">
+
+          <!-- Name + Path -->
+          <div class="form-row">
+            <div class="form-group" style="margin:0">
+              <label>Share Name</label>
+              <input type="text" name="name" value="{{.Share.Name}}" required>
+            </div>
+            <div class="form-group dir-wrap" style="margin:0" x-data="{path:'{{.Share.Path}}',dirs:[],showDirs:false,async fetchDirs(){if(!this.path){this.dirs=[];this.showDirs=false;return;}try{const r=await fetch('/api/dirs?path='+encodeURIComponent(this.path));if(r.ok){this.dirs=await r.json();this.showDirs=this.dirs.length>0;}}catch(e){this.dirs=[];this.showDirs=false;}},selectDir(d){const b=this.path.endsWith('/')?this.path:this.path+'/';this.path=b+d;this.dirs=[];this.showDirs=false;this.fetchDirs();}}">
+              <label>Directory Path</label>
+              <input type="text" name="path" x-model="path" @input.debounce.300ms="fetchDirs()" autocomplete="off" required>
+              <div class="dir-dropdown" x-show="showDirs" x-cloak @click.away="showDirs=false">
+                <template x-for="d in dirs" :key="d">
+                  <div class="dir-item" @click="selectDir(d)">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <span x-text="(path.replace(/\/?$/,'/'))+d"></span>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Comment -->
+          <div class="form-group" style="margin:0">
+            <label>Comment</label>
+            <input type="text" name="comment" value="{{.Share.Comment}}">
+          </div>
+
+          <!-- Valid Users multi-select -->
+          <div class="form-group" style="margin:0;position:relative" x-data="multiSelect(_shareOptions,'{{.Share.ValidUsers}}')">
+            <label>Valid Users & Groups</label>
+            <input type="hidden" name="valid_users" :value="value">
+            <div class="ms-box" :class="{open:open}" @click="open=!open">
+              <div class="ms-tags">
+                <template x-for="s in selected" :key="s">
+                  <span class="ms-tag"><span x-text="s"></span><button type="button" @click.stop="remove(s)">&times;</button></span>
+                </template>
+                <span x-show="selected.length===0" class="text-muted" style="font-size:13px;padding:2px 4px">Select users & groups...</span>
+              </div>
+              <svg class="ms-arrow" :class="{open:open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="ms-dropdown" x-show="open" x-cloak>
+              <div class="ms-search"><input type="text" x-model="search" placeholder="Search..." @click.stop></div>
+              <div class="ms-options">
+                <template x-for="opt in filtered" :key="opt">
+                  <label class="ms-option">
+                    <input type="checkbox" :checked="isSelected(opt)" @change="toggle(opt)">
+                    <span x-text="opt"></span>
+                  </label>
+                </template>
+                <div x-show="filtered.length===0" class="empty" style="padding:10px">No results</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Write List multi-select -->
+          <div class="form-group" style="margin:0;position:relative" x-data="multiSelect(_shareOptions,'{{.Share.WriteList}}')">
+            <label>Write List</label>
+            <input type="hidden" name="write_list" :value="value">
+            <div class="ms-box" :class="{open:open}" @click="open=!open">
+              <div class="ms-tags">
+                <template x-for="s in selected" :key="s">
+                  <span class="ms-tag"><span x-text="s"></span><button type="button" @click.stop="remove(s)">&times;</button></span>
+                </template>
+                <span x-show="selected.length===0" class="text-muted" style="font-size:13px;padding:2px 4px">Select users & groups...</span>
+              </div>
+              <svg class="ms-arrow" :class="{open:open}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="ms-dropdown" x-show="open" x-cloak>
+              <div class="ms-search"><input type="text" x-model="search" placeholder="Search..." @click.stop></div>
+              <div class="ms-options">
+                <template x-for="opt in filtered" :key="opt">
+                  <label class="ms-option">
+                    <input type="checkbox" :checked="isSelected(opt)" @change="toggle(opt)">
+                    <span x-text="opt"></span>
+                  </label>
+                </template>
+                <div x-show="filtered.length===0" class="empty" style="padding:10px">No results</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Options -->
+          <div class="form-row">
+            <div class="form-group" style="margin:0">
+              <label>Read Only</label>
+              <select name="read_only">
+                <option value="yes" {{if eq .Share.ReadOnly "yes"}}selected{{end}}>Yes (read only)</option>
+                <option value="no"  {{if eq .Share.ReadOnly "no"}}selected{{end}}>No (writable)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>Browseable</label>
+              <select name="browseable">
+                <option value="yes" {{if eq .Share.Browseable "yes"}}selected{{end}}>Yes</option>
+                <option value="no"  {{if eq .Share.Browseable "no"}}selected{{end}}>No (hidden)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin:0;max-width:50%">
+            <label>Guest OK</label>
+            <select name="guest_ok">
+              <option value="no"  {{if eq .Share.GuestOK "no"}}selected{{end}}>No</option>
+              <option value="yes" {{if eq .Share.GuestOK "yes"}}selected{{end}}>Yes</option>
+            </select>
+          </div>
+
+          <!-- Create Mask -->
+          <div class="form-group" style="margin:0" x-data="permPicker('{{if .Share.CreateMask}}{{.Share.CreateMask}}{{else}}0664{{end}}')">
+            <label>File Create Mask</label>
+            <input type="hidden" name="create_mask" :value="octal">
+            <div class="perm-picker">
+              <div class="perm-grid">
+                <div></div>
+                <div class="perm-head">Owner</div><div class="perm-head">Group</div><div class="perm-head">Public</div>
+                <div class="perm-label">Read</div>
+                <div class="perm-cell"><input type="checkbox" x-model="owner.r"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="group.r"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="pub.r"></div>
+                <div class="perm-label">Write</div>
+                <div class="perm-cell"><input type="checkbox" x-model="owner.w"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="group.w"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="pub.w"></div>
+                <div class="perm-label">Execute</div>
+                <div class="perm-cell"><input type="checkbox" x-model="owner.x"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="group.x"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="pub.x"></div>
+              </div>
+              <div class="perm-result">
+                <span class="perm-octal" x-text="octal"></span>
+                <span class="perm-symbolic" x-text="symbolic"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Directory Mask -->
+          <div class="form-group" style="margin:0" x-data="permPicker('{{if .Share.DirectoryMask}}{{.Share.DirectoryMask}}{{else}}0775{{end}}')">
+            <label>Directory Mask</label>
+            <input type="hidden" name="directory_mask" :value="octal">
+            <div class="perm-picker">
+              <div class="perm-grid">
+                <div></div>
+                <div class="perm-head">Owner</div><div class="perm-head">Group</div><div class="perm-head">Public</div>
+                <div class="perm-label">Read</div>
+                <div class="perm-cell"><input type="checkbox" x-model="owner.r"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="group.r"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="pub.r"></div>
+                <div class="perm-label">Write</div>
+                <div class="perm-cell"><input type="checkbox" x-model="owner.w"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="group.w"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="pub.w"></div>
+                <div class="perm-label">Execute</div>
+                <div class="perm-cell"><input type="checkbox" x-model="owner.x"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="group.x"></div>
+                <div class="perm-cell"><input type="checkbox" x-model="pub.x"></div>
+              </div>
+              <div class="perm-result">
+                <span class="perm-octal" x-text="octal"></span>
+                <span class="perm-symbolic" x-text="symbolic"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions" style="margin:0">
+            <a href="/shares" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {{end}}
+  </div>
+  {{template "footer" .}}
+</div>
+
+<script>
+function multiSelect(options, initial) {
+    return {
+        options,
+        selected: initial ? initial.split(',').map(s => s.trim()).filter(Boolean) : [],
+        search: '',
+        open: false,
+        get filtered() {
+            return this.options.filter(o => !this.search || o.toLowerCase().includes(this.search.toLowerCase()));
+        },
+        isSelected(opt) { return this.selected.includes(opt); },
+        toggle(opt) {
+            if (this.isSelected(opt)) this.selected = this.selected.filter(s => s !== opt);
+            else this.selected.push(opt);
+        },
+        remove(opt) { this.selected = this.selected.filter(s => s !== opt); },
+        get value() { return this.selected.join(', '); }
+    };
+}
+
+function permPicker(initial) {
+    const parse = n => ({ r: !!(n & 4), w: !!(n & 2), x: !!(n & 1) });
+    const fromOctal = oct => {
+        const s = (oct || '0755').replace(/^0*/, '').padStart(3, '0');
+        return { owner: parse(parseInt(s[0])), group: parse(parseInt(s[1])), pub: parse(parseInt(s[2])) };
+    };
+    const i = fromOctal(initial);
+    return {
+        owner: i.owner, group: i.group, pub: i.pub,
+        calc(p) { return (p.r ? 4 : 0) + (p.w ? 2 : 0) + (p.x ? 1 : 0); },
+        get octal() { return '0' + this.calc(this.owner) + this.calc(this.group) + this.calc(this.pub); },
+        get symbolic() {
+            const s = p => (p.r ? 'r' : '-') + (p.w ? 'w' : '-') + (p.x ? 'x' : '-');
+            return s(this.owner) + s(this.group) + s(this.pub);
+        }
+    };
+}
+</script>
+{{end}}

@@ -1,0 +1,147 @@
+{{define "title"}}{{.Title}}{{end}}
+{{define "body"}}
+{{template "sidebar" .}}
+<div class="main">
+  {{template "topbar" .}}
+  <div class="content">
+    {{template "flashes" .}}
+
+    <div class="card" x-data="{addOpen:false,delGroup:'',delOpen:false,assignGroup:'',assignOpen:false}">
+      <div class="card-header">
+        <h2>Groups</h2>
+        <button class="btn btn-primary btn-sm" @click="addOpen=true">+ Add Group</button>
+      </div>
+      <div class="card-body" style="padding-bottom:0">
+        <div class="search-box">
+          <svg class="search-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Search groups..." id="groupSearch" oninput="filterTable('groupSearch','groupTable')">
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="groupTable">
+          <thead>
+            <tr><th>Group</th><th>GID</th><th>Members</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            {{$csrf := .CSRF}}
+            {{range $g := .Data.Groups}}
+            <tr>
+              <td><strong>{{$g.Name}}</strong></td>
+              <td class="text-muted">{{$g.GID}}</td>
+              <td>
+                <div class="tag-list">
+                  {{range $m := $g.Members}}
+                  <form method="POST" action="/groups/remove" style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{$csrf}}">
+                    <input type="hidden" name="username" value="{{$m}}">
+                    <input type="hidden" name="group" value="{{$g.Name}}">
+                    <button type="submit" class="badge badge-gray" style="cursor:pointer;border:none;background:#f3f4f6" title="Remove from group">{{$m}} &times;</button>
+                  </form>
+                  {{else}}<span class="text-muted" style="font-size:12px">No members</span>{{end}}
+                </div>
+              </td>
+              <td>
+                <div class="btn-group">
+                  <button class="btn btn-ghost btn-sm" @click="assignGroup='{{$g.Name}}';assignOpen=true">+ Add Users</button>
+                  <button class="btn btn-danger btn-sm" @click="delGroup='{{$g.Name}}';delOpen=true">Delete</button>
+                </div>
+              </td>
+            </tr>
+            {{else}}
+            <tr><td colspan="4" class="empty">No groups found.</td></tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Add Group Modal -->
+      <div class="modal-backdrop" x-show="addOpen" x-cloak @click.self="addOpen=false">
+        <div class="modal" @click.stop>
+          <div class="modal-header">
+            <h3>Create Group</h3>
+            <button class="modal-close" @click="addOpen=false">&times;</button>
+          </div>
+          <form method="POST" action="/groups/add">
+            <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+            <div class="modal-body">
+              <div class="form-group">
+                <label>Group Name</label>
+                <input type="text" name="name" required pattern="[a-zA-Z0-9_\-]{1,32}" placeholder="e.g. fileshare">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="addOpen=false">Cancel</button>
+              <button type="submit" class="btn btn-primary">Create Group</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Add Users to Group Modal -->
+      <div class="modal-backdrop" x-show="assignOpen" x-cloak @click.self="assignOpen=false">
+        <div class="modal" @click.stop>
+          <div class="modal-header">
+            <h3>Add Users to <strong x-text="assignGroup"></strong></h3>
+            <button class="modal-close" @click="assignOpen=false">&times;</button>
+          </div>
+          <form method="POST" action="/groups/assign-multi">
+            <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+            <input type="hidden" name="group" :value="assignGroup">
+            <div class="modal-body">
+              <div class="form-group" style="margin:0">
+                <label>Select Users</label>
+                {{if .Data.Users}}
+                <div class="check-list">
+                  {{range .Data.Users}}
+                  <label>
+                    <input type="checkbox" name="usernames" value="{{.}}">
+                    <span>{{.}}</span>
+                  </label>
+                  {{end}}
+                </div>
+                {{else}}
+                <p class="text-muted" style="font-size:13px;padding:12px 0">No SMB users found. Add users first.</p>
+                {{end}}
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="assignOpen=false">Cancel</button>
+              <button type="submit" class="btn btn-primary">Add to Group</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Delete Confirm Modal -->
+      <div class="modal-backdrop" x-show="delOpen" x-cloak @click.self="delOpen=false">
+        <div class="modal" @click.stop>
+          <div class="modal-header">
+            <h3>Delete Group</h3>
+            <button class="modal-close" @click="delOpen=false">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>Delete group <strong x-text="delGroup"></strong>? Members will not be removed from the system.</p>
+          </div>
+          <form method="POST" action="/groups/delete">
+            <input type="hidden" name="csrf_token" value="{{.CSRF}}">
+            <input type="hidden" name="name" :value="delGroup">
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="delOpen=false">Cancel</button>
+              <button type="submit" class="btn btn-danger">Delete Group</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {{template "footer" .}}
+</div>
+<script>
+function filterTable(inputId,tableId){
+  const q=document.getElementById(inputId).value.toLowerCase();
+  document.querySelectorAll('#'+tableId+' tbody tr').forEach(tr=>{
+    tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
+</script>
+{{end}}
