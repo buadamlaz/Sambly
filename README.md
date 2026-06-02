@@ -69,7 +69,15 @@ Single binary, zero runtime dependencies, installs in seconds.
 
 ## Screenshots
 
-> _Screenshots coming soon_
+<div align="center">
+  <img src="assets/screenshot_1.png" width="32%" alt="Dashboard" />
+  <img src="assets/screenshot_2.png" width="32%" alt="Shares" />
+  <img src="assets/screenshot_3.png" width="32%" alt="Settings" />
+</div>
+
+<div align="center">
+  <sub>Dashboard &nbsp;·&nbsp; Share Management &nbsp;·&nbsp; Settings</sub>
+</div>
 
 ---
 
